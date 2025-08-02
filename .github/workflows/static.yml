@@ -1,70 +1,46 @@
-# This workflow uses a new GitHub Pages deployment action that simplifies
-# the process of building and deploying your static site.
+# This workflow is for deploying static sites that require a build step
+# using a package manager like npm.
 
-name: Deploy static site to GitHub Pages
+name: Deploy Static Site (with build)
 
-# When to run the workflow
 on:
-  # Triggers the workflow on push events to the `main` branch
-  # This is the most common and simple way to trigger a deployment.
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab on GitHub.
   workflow_dispatch:
 
-# Grant the workflow necessary permissions
-# The `contents: read` permission allows the workflow to read your repository's code.
-# The `pages: write` permission allows the workflow to deploy to GitHub Pages.
-# The `id-token: write` permission is needed for authentication with the deployment server.
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# This is what the workflow will do
 jobs:
-  # The `deploy` job handles the entire build and deploy process
   deploy:
-    # The runner environment where the job will execute
     runs-on: ubuntu-latest
     environment:
-      # Specifies the deployment environment
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
-      # Step 1: Check out your repository
-      # The `actions/checkout@v4` action downloads your code to the runner.
       - name: Checkout
         uses: actions/checkout@v4
       
-      # Step 2: Set up the GitHub Pages environment
-      # This action sets up the necessary configuration for deploying with GitHub Pages.
       - name: Setup Pages
         uses: actions/configure-pages@v4
-        
-      # Step 3: Build your static site
-      # The `jekyll build` command will generate your static site files.
-      # You can replace this with any other build command if you're using
-      # a different static site generator (e.g., `npm run build` for React).
-      - name: Build with Jekyll
-        run: |
-          gem install jekyll
-          jekyll build
       
-      # Step 4: Upload the build artifact
-      # This action takes the built site files from the `_site` directory and
-      # prepares them for deployment.
+      # Step to install dependencies and build the site
+      # Replace 'npm run build' with your specific build command if needed.
+      - name: Build the site
+        run: |
+          npm install
+          npm run build
+      
+      # The build output is typically in a directory like `build` or `dist`.
+      # Change the 'path' below to match your project's output directory.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # The directory containing the static site files after building
-          path: './_site'
+          path: './build'
           
-      # Step 5: Deploy to GitHub Pages
-      # The `actions/deploy-pages@v4` action takes the artifact and publishes it
-      # to your GitHub Pages site.
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
