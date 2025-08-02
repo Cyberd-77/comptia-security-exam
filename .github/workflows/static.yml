@@ -27,24 +27,25 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
-      # New step: This sets up the Node.js environment so 'npm' commands can be found.
+      # This sets up the Node.js environment so 'npm' commands can be found.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
       
-      # Step to install dependencies and build the site
+      # Step: Install dependencies and build the site.
+      # The `npm run build` command will now use your 'vite build' script.
       - name: Build the site
         run: |
           npm install
           npm run build
       
-      # The build output is typically in a directory like `build` or `dist`.
-      # Change the 'path' below to match your project's output directory.
+      # Step: Upload the build artifact.
+      # This now correctly points to the `dist` folder created by Vite.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './build'
+          path: './dist'
           
       - name: Deploy to GitHub Pages
         id: deployment
