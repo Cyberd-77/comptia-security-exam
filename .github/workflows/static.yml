@@ -15,14 +15,14 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the runs that are currently running.
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying to GitHub Pages
+  # Single deploy job since we're just deploying static content
   deploy:
     environment:
       name: github-pages
@@ -31,21 +31,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-      - name: Install dependencies
+      - name: Install dependencies  # This is the new, crucial step
         run: npm install
-      - name: Build with Vite
+      - name: Build
         run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload the `dist` directory as the artifact
+          # Upload entire repository
           path: './dist'
       - name: Deploy to GitHub Pages
         id: deployment
