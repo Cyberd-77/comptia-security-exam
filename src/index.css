@@ -1,0 +1,8 @@
+/*
+This file contains the necessary Tailwind CSS directives.
+It's imported by main.jsx to ensure that all Tailwind classes
+are available for use throughout the application.
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
