@@ -1,32 +1,55 @@
-# This workflow deploys a static website directly to GitHub Pages.
+# This workflow uses the official GitHub Pages action to deploy a static website.
 # It is triggered whenever you push to the 'main' branch.
 
-name: Deploy Static Website to GitHub Pages
+name: Deploy Static Site to GitHub Pages
 
 on:
+  # Triggers the workflow on pushes to the main branch
   push:
     branches:
-      - main  # Set your main branch name here
+      - main
 
+# Give the GITHUB_TOKEN write permissions to the repository's contents and pages.
+# This is required for the deployment to work.
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# A workflow run is made up of one or more jobs.
 jobs:
+  # The 'deploy' job handles the entire deployment process.
   deploy:
+    # Set the deployment environment. This is required for GitHub Pages.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # The job will run on the latest version of an Ubuntu runner.
     runs-on: ubuntu-latest
+
+    # A sequence of tasks to be executed as part of the job.
     steps:
-      # Step 1: Checkout the code from your repository.
-      - name: Checkout repository
+      # Step 1: Check out the repository code.
+      # This action checks out your repository at the current commit.
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # Step 2: Deploy the files to the 'gh-pages' branch.
-      # The `publish_dir` is set to a single dot (`.`)
-      # because your index.html file is in the root of the repository.
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      # Step 2: Set up GitHub Pages.
+      # This action sets up the GitHub Pages service.
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # Step 3: Upload the static site files as an artifact.
+      # The `path: '.'` tells the action to package all files
+      # in the root directory of your repository.
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          publish_branch: gh-pages # This is the branch where the static files will be hosted
+          path: '.'
+
+      # Step 4: Deploy the artifact to GitHub Pages.
+      # This action deploys the packaged artifact to your GitHub Pages site.
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
