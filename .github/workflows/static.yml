@@ -27,8 +27,13 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
+      # New step: This sets up the Node.js environment so 'npm' commands can be found.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
       # Step to install dependencies and build the site
-      # Replace 'npm run build' with your specific build command if needed.
       - name: Build the site
         run: |
           npm install
