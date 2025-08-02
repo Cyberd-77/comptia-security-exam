@@ -27,18 +27,19 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
-      # This sets up the Node.js environment so 'npm' commands can be found.
-      - name: Setup Node.js
+      # Setup Node.js and cache the node_modules folder to speed up future runs.
+      - name: Setup Node.js and Cache
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm' # This caches the npm dependencies
       
-      # Step: Install dependencies and build the site.
-      # The `npm run build` command will now use your 'vite build' script.
+      # Step: Install dependencies and build the site using npx.
+      # npx is a more direct way to run your build tool, avoiding potential path issues.
       - name: Build the site
         run: |
           npm install
-          npm run build
+          npx vite build
       
       # Step: Upload the build artifact.
       # This now correctly points to the `dist` folder created by Vite.
