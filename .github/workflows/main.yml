@@ -1,7 +1,6 @@
-# This workflow uses the official GitHub Pages action to deploy a static website.
-# It is triggered whenever you push to the 'main' branch.
+# This workflow uses a popular third-party action for a simple, reliable deployment.
 
-name: Deploy Static Site to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   # Triggers the workflow on pushes to the main branch
@@ -9,54 +8,15 @@ on:
     branches:
       - main
 
-# Give the GITHUB_TOKEN write permissions to the repository's contents and pages.
-# This is required for the deployment to work.
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# A workflow run is made up of one or more jobs.
 jobs:
-  # The 'deploy' job handles the entire deployment process.
   deploy:
-    # Set the deployment environment. This is required for GitHub Pages.
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    # The job will run on the latest version of an Ubuntu runner.
     runs-on: ubuntu-latest
-
-    # A sequence of tasks to be executed as part of the job.
     steps:
-      # Step 1: Check out the repository code.
-      # This action checks out your repository at the current commit.
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
-      # Step 2: Build the site into a '_site' directory.
-      # This ensures the 'index.html' file is at the root of the artifact.
-      - name: Build site
-        run: |
-          mkdir _site
-          cp index.html _site/index.html
-
-      # Step 3: Set up GitHub Pages.
-      # This action sets up the GitHub Pages service.
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      # Step 4: Upload the static site files as an artifact.
-      # The `path: '_site'` tells the action to package only the files
-      # in the '_site' directory.
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '_site'
-
-      # Step 5: Deploy the artifact to GitHub Pages.
-      # This action deploys the packaged artifact to your GitHub Pages site.
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
