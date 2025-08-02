@@ -6,4 +6,8 @@ export default defineConfig({
   plugins: [react()],
   // Set the base path to the repository name for GitHub Pages deployment
   base: '/comptia-security-exam/',
+  // Configure the build output directory
+  build: {
+    outDir: 'dist',
+  },
 })
