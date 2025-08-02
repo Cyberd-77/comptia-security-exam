@@ -35,28 +35,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Step 2: Build and prepare the site artifact.
-      # This step creates a '_site' folder and copies the index.html
-      # file into it, ensuring the correct file structure for deployment.
-      - name: Build site
-        run: |
-          mkdir _site
-          cp index.html _site/index.html
-
-      # Step 3: Set up GitHub Pages.
+      # Step 2: Set up GitHub Pages.
       # This action sets up the GitHub Pages service.
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # Step 4: Upload the static site files as an artifact.
-      # The `path: '_site'` tells the action to package the files
-      # from the '_site' directory.
+      # Step 3: Upload the static site files as an artifact.
+      # The `path: '.'` tells the action to package all files
+      # from the root directory of your repository.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '_site'
+          path: '.'
 
-      # Step 5: Deploy the artifact to GitHub Pages.
+      # Step 4: Deploy the artifact to GitHub Pages.
       # This action deploys the packaged artifact to your GitHub Pages site.
       - name: Deploy to GitHub Pages
         id: deployment
