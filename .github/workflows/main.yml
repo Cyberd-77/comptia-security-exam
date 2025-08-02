@@ -39,6 +39,9 @@ jobs:
       # This action sets up the GitHub Pages service.
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          # This tells the action to use your repository name as the base URL.
+          base_url: /${{ github.event.repository.name }}/
 
       # Step 3: Upload the static site files as an artifact.
       # The `path: '.'` tells the action to package all files
