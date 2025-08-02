@@ -47,6 +47,8 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
+          # Explicitly name the artifact to ensure correct handling by the deployment step
+          artifact_name: github-pages
 
       # Step 4: Deploy the artifact to GitHub Pages.
       # This action deploys the packaged artifact to your GitHub Pages site.
