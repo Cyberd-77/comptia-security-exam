@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 // npm install lucide-react
 
 import {
-  CheckCircle2, ArrowLeft, ArrowRight, Flag, Play, Pause
+  CheckCircle2, XCircle, ArrowLeft, ArrowRight, Flag, Play, Pause
 } from 'lucide-react';
 
 // The question pool has been moved inside the component for simplicity
