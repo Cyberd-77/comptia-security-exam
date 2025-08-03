@@ -1,632 +1,924 @@
-import React, { useState, useEffect } from 'react';
-import {
-  ChevronDown, ChevronUp, CheckCircle2, XCircle, SkipForward, ArrowLeft, ArrowRight, Flag, RefreshCw, Play, Pause
-} from 'lucide-react';
-
-// The question pool has been moved inside the component for simplicity
-const questionsPool = [
-  // --- Domain 1.0: General Security Concepts ---
-  {
-    id: 'q1-1',
-    domain: '1.0 General Security Concepts',
-    question: "What is the primary purpose of a compensating control?",
-    options: ["To prevent an incident from occurring.", "To recover from an incident.", "To provide an alternative to a primary control that is not feasible.", "To deter potential attackers."],
-    correctAnswers: ["To provide an alternative to a primary control that is not feasible."],
-    difficulty: "Easy",
-    hint: "Think about a situation where you can't implement the ideal security measure. What do you do instead?"
-  },
-  {
-    id: 'q1-2',
-    domain: '1.0 General Security Concepts',
-    question: "Which of the following describes the 'Integrity' principle of the CIA triad?",
-    options: ["Ensuring data is accessible to authorized users when needed.", "Ensuring data is not altered or destroyed in an unauthorized manner.", "Ensuring data is not disclosed to unauthorized individuals.", "Ensuring that the organization can recover from a disaster."],
-    correctAnswers: ["Ensuring data is not altered or destroyed in an unauthorized manner."],
-    difficulty: "Easy",
-    hint: "The 'I' in CIA stands for integrity."
-  },
-  {
-    id: 'q1-3',
-    domain: '1.0 General Security Concepts',
-    question: "A security analyst is investigating a phishing attack. The goal is to determine the source of the attack without the attacker knowing they have been detected. Which of the following describes this type of security objective?",
-    options: ["Deterrence", "Prevention", "Detection", "Obfuscation"],
-    correctAnswers: ["Detection"],
-    difficulty: "Medium",
-    hint: "The question focuses on discovering an event without the attacker's knowledge."
-  },
-  {
-    id: 'q1-4',
-    domain: '1.0 General Security Concepts',
-    question: "What is the primary purpose of a security policy?",
-    options: ["To define the rules and standards for system configuration.", "To provide a high-level statement of management's intent.", "To specify technical controls for network devices.", "To outline procedures for responding to security incidents."],
-    correctAnswers: ["To provide a high-level statement of management's intent."],
-    difficulty: "Medium",
-    hint: "A policy is a high-level document, while standards, baselines, and procedures are more granular."
-  },
-  {
-    id: 'q1-5',
-    domain: '1.0 General Security Concepts',
-    question: "Which of the following is an example of a technical control?",
-    options: ["Security awareness training", "Physical access control", "Intrusion Detection System (IDS)", "Biometric door lock"],
-    correctAnswers: ["Intrusion Detection System (IDS)"],
-    difficulty: "Easy",
-    hint: "Technical controls are implemented with technology."
-  },
-  // --- Domain 2.0: Threats, Vulnerabilities, and Mitigations ---
-  {
-    id: 'q2-1',
-    domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-    question: "An attacker sends an email that appears to be from a legitimate company, asking the recipient to click a link to verify their account information. This is an example of what type of attack?",
-    options: ["Phishing", "Vishing", "Smishing", "Spear Phishing"],
-    correctAnswers: ["Phishing"],
-    difficulty: "Easy",
-    hint: "This is a general term for fraudulent attempts to obtain sensitive information via email."
-  },
-  {
-    id: 'q2-2',
-    domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-    question: "Which of the following is a key characteristic of a zero-day exploit?",
-    options: ["It is a vulnerability that has been publicly disclosed and patched.", "It is a vulnerability that has been discovered but no patch is available.", "It is a vulnerability that is only exploited by nation-state actors.", "It is a vulnerability that affects a new software version."],
-    correctAnswers: ["It is a vulnerability that has been discovered but no patch is available."],
-    difficulty: "Medium",
-    hint: "Think about the timeline. 'Zero-day' refers to the time a vendor has to fix it."
-  },
-  {
-    id: 'q2-3',
-    domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-    question: "What is the primary goal of a Denial-of-Service (DoS) attack?",
-    options: ["To steal sensitive data.", "To alter data on a server.", "To make a service unavailable to its intended users.", "To gain unauthorized access to a network."],
-    correctAnswers: ["To make a service unavailable to its intended users."],
-    difficulty: "Easy",
-    hint: "The name of the attack gives it away."
-  },
-  {
-    id: 'q2-4',
-    domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-    question: "A user receives a text message urging them to click a link to win a prize. This is an example of what type of attack?",
-    options: ["Phishing", "Vishing", "Smishing", "Spam"],
-    correctAnswers: ["Smishing"],
-    difficulty: "Easy",
-    hint: "Think about the medium of communication. 'SMS' is key."
-  },
-  {
-    id: 'q2-5',
-    domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-    question: "Which of the following is a common mitigation for a man-in-the-middle attack?",
-    options: ["Implementing a strong firewall.", "Using HTTPS with a valid SSL/TLS certificate.", "Configuring a WAF (Web Application Firewall).", "Regularly updating antivirus software."],
-    correctAnswers: ["Using HTTPS with a valid SSL/TLS certificate."],
-    difficulty: "Medium",
-    hint: "A man-in-the-middle attack involves intercepting communication. What technology encrypts this communication?"
-  },
-  // --- Domain 3.0: Architecture and Design ---
-  {
-    id: 'q3-1',
-    domain: '3.0 Architecture and Design',
-    question: "What is the primary benefit of network segmentation?",
-    options: ["To increase network speed.", "To reduce the cost of network hardware.", "To contain a security breach and limit its impact.", "To simplify network management."],
-    correctAnswers: ["To contain a security breach and limit its impact."],
-    difficulty: "Medium",
-    hint: "Think about how a firewall between network segments can stop an attack from spreading."
-  },
-  {
-    id: 'q3-2',
-    domain: '3.0 Architecture and Design',
-    question: "Which of the following is an example of a secure boot process?",
-    options: ["BIOS starts the operating system.", "UEFI verifies the digital signature of boot loaders and drivers.", "The user enters a password to boot the system.", "The system performs a full memory test."],
-    correctAnswers: ["UEFI verifies the digital signature of boot loaders and drivers."],
-    difficulty: "Hard",
-    hint: "Secure boot uses a modern firmware interface to check the integrity of the boot chain."
-  },
-  {
-    id: 'q3-3',
-    domain: '3.0 Architecture and Design',
-    question: "What is the purpose of a honey pot?",
-    options: ["To protect a real server from attacks.", "To detect and deflect attacks by luring attackers to a decoy system.", "To analyze network traffic for anomalies.", "To encrypt data at rest on a server."],
-    correctAnswers: ["To detect and deflect attacks by luring attackers to a decoy system."],
-    difficulty: "Easy",
-    hint: "It's a decoy."
-  },
-  {
-    id: 'q3-4',
-    domain: '3.0 Architecture and Design',
-    question: "A company wants to ensure that a power outage does not disrupt its critical services. Which of the following would best address this concern?",
-    options: ["An Uninterruptible Power Supply (UPS)", "A surge protector", "A RAID array", "A firewall"],
-    correctAnswers: ["An Uninterruptible Power Supply (UPS)"],
-    difficulty: "Easy",
-    hint: "This device provides temporary power when the main power source fails."
-  },
-  {
-    id: 'q3-5',
-    domain: '3.0 Architecture and Design',
-    question: "Which of the following is a secure way to connect to a remote server's command line interface?",
-    options: ["Telnet", "SSH", "FTP", "HTTP"],
-    correctAnswers: ["SSH"],
-    difficulty: "Easy",
-    hint: "This protocol provides a secure, encrypted connection."
-  },
-  // --- Domain 4.0: Identity and Access Management (IAM) ---
-  {
-    id: 'q4-1',
-    domain: '4.0 Identity and Access Management (IAM)',
-    question: "What is the principle of least privilege?",
-    options: ["Giving all users the same level of access to resources.", "Granting users only the permissions necessary to perform their job.", "Allowing a user to access any resource they request.", "Granting users temporary elevated privileges."],
-    correctAnswers: ["Granting users only the permissions necessary to perform their job."],
-    difficulty: "Easy",
-    hint: "It's about minimizing the privileges a user has."
-  },
-  {
-    id: 'q4-2',
-    domain: '4.0 Identity and Access Management (IAM)',
-    question: "Which of the following is a benefit of using Multi-Factor Authentication (MFA)?",
-    options: ["It simplifies the login process for users.", "It reduces the risk of password-only attacks.", "It eliminates the need for strong passwords.", "It makes it easier to recover lost passwords."],
-    correctAnswers: ["It reduces the risk of password-only attacks."],
-    difficulty: "Easy",
-    hint: "MFA requires more than one factor for authentication, making it much harder for attackers."
-  },
-  {
-    id: 'q4-3',
-    domain: '4.0 Identity and Access Management (IAM)',
-    question: "What is the purpose of a certificate authority (CA) in a Public Key Infrastructure (PKI)?",
-    options: ["To store user passwords.", "To issue and manage digital certificates.", "To encrypt all network traffic.", "To act as a firewall."],
-    correctAnswers: ["To issue and manage digital certificates."],
-    difficulty: "Medium",
-    hint: "The 'A' in CA stands for authority, and its primary job is to manage certificates."
-  },
-  {
-    id: 'q4-4',
-    domain: '4.0 Identity and Access Management (IAM)',
-    question: "What is the function of a Security Assertion Markup Language (SAML) provider?",
-    options: ["To manage user passwords.", "To provide a single sign-on (SSO) solution.", "To encrypt data at rest.", "To manage network access control lists."],
-    correctAnswers: ["To provide a single sign-on (SSO) solution."],
-    difficulty: "Hard",
-    hint: "SAML is a protocol for exchanging authentication and authorization data between an identity provider and a service provider."
-  },
-  {
-    id: 'q4-5',
-    domain: '4.0 Identity and Access Management (IAM)',
-    question: "What is the purpose of an access control list (ACL) on a router?",
-    options: ["To filter network traffic based on rules.", "To provide a list of all connected devices.", "To prioritize network packets.", "To manage user accounts."],
-    correctAnswers: ["To filter network traffic based on rules."],
-    difficulty: "Easy",
-    hint: "ACLs are used to permit or deny traffic based on criteria like source/destination IP and port."
-  },
-  // --- Domain 5.0: Cryptography and PKI ---
-  {
-    id: 'q5-1',
-    domain: '5.0 Cryptography and PKI',
-    question: "Which of the following is a symmetric encryption algorithm?",
-    options: ["RSA", "Diffie-Hellman", "AES", "ECC"],
-    correctAnswers: ["AES"],
-    difficulty: "Easy",
-    hint: "Symmetric algorithms use a single key for both encryption and decryption."
-  },
-  {
-    id: 'q5-2',
-    domain: '5.0 Cryptography and PKI',
-    question: "What is the primary purpose of a digital signature?",
-    options: ["To encrypt data.", "To verify the integrity and authenticity of a message.", "To speed up data transmission.", "To compress data."],
-    correctAnswers: ["To verify the integrity and authenticity of a message."],
-    difficulty: "Medium",
-    hint: "It proves the sender's identity and that the message hasn't been tampered with."
-  },
-  {
-    id: 'q5-3',
-    domain: '5.0 Cryptography and PKI',
-    question: "What is a key benefit of using asymmetric encryption?",
-    options: ["It is faster than symmetric encryption.", "It is more secure than symmetric encryption.", "It eliminates the need to securely share a secret key.", "It uses a single key for both encryption and decryption."],
-    correctAnswers: ["It eliminates the need to securely share a secret key."],
-    difficulty: "Medium",
-    hint: "Asymmetric encryption uses a public and private key pair."
-  },
-  {
-    id: 'q5-4',
-    domain: '5.0 Cryptography and PKI',
-    question: "What is the purpose of a nonce in cryptography?",
-    options: ["To provide a unique value for each session to prevent replay attacks.", "To act as a public key in an asymmetric algorithm.", "To encrypt the data payload of a message.", "To sign a digital certificate."],
-    correctAnswers: ["To provide a unique value for each session to prevent replay attacks."],
-    difficulty: "Hard",
-    hint: "A nonce is a number used once."
-  },
-  {
-    id: 'q5-5',
-    domain: '5.0 Cryptography and PKI',
-    question: "Which of the following is a hashing algorithm?",
-    options: ["AES", "3DES", "SHA-256", "RSA"],
-    correctAnswers: ["SHA-256"],
-    difficulty: "Easy",
-    hint: "Hashing algorithms produce a fixed-size string from an input."
-  },
-  // --- Domain 6.0: Cloud, Virtualization, and Emerging Technologies ---
-  {
-    id: 'q6-1',
-    domain: '6.0 Cloud, Virtualization, and Emerging Technologies',
-    question: "Which of the following is an example of a Platform as a Service (PaaS) offering?",
-    options: ["Amazon S3", "Google Cloud Compute Engine", "Microsoft Azure App Service", "Salesforce CRM"],
-    correctAnswers: ["Microsoft Azure App Service"],
-    difficulty: "Hard",
-    hint: "PaaS provides a platform for developers to build and deploy applications without managing the underlying infrastructure."
-  },
-  {
-    id: 'q6-2',
-    domain: '6.0 Cloud, Virtualization, and Emerging Technologies',
-    question: "What is the primary security concern with virtualization?",
-    options: ["The risk of a single hypervisor failure affecting multiple virtual machines.", "The increased cost of hardware.", "The inability to monitor network traffic.", "The lack of patching for virtual machines."],
-    correctAnswers: ["The risk of a single hypervisor failure affecting multiple virtual machines."],
-    difficulty: "Medium",
-    hint: "The hypervisor is a single point of failure that can impact many guests."
-  },
-  {
-    id: 'q6-3',
-    domain: '6.0 Cloud, Virtualization, and Emerging Technologies',
-    question: "A company wants to host an application in a public cloud, but maintain control over the operating system and application layer. Which cloud service model should they choose?",
-    options: ["IaaS", "PaaS", "SaaS", "DaaS"],
-    correctAnswers: ["IaaS"],
-    difficulty: "Hard",
-    hint: "IaaS gives you the infrastructure (servers, storage, networking) but you manage the OS and above."
-  },
-  {
-    id: 'q6-4',
-    domain: '6.0 Cloud, Virtualization, and Emerging Technologies',
-    question: "What is the primary security benefit of using containers?",
-    options: ["Containers are inherently more secure than virtual machines.", "Containers allow for easy portability of applications.", "Containers provide process isolation from the host and other containers.", "Containers reduce the need for security patches."],
-    correctAnswers: ["Containers provide process isolation from the host and other containers."],
-    difficulty: "Medium",
-    hint: "Isolation is key to a container's security model."
-  },
-  {
-    id: 'q6-5',
-    domain: '6.0 Cloud, Virtualization, and Emerging Technologies',
-    question: "Which of the following is a security concern related to the Internet of Things (IoT)?",
-    options: ["The devices are too expensive.", "The devices are not interoperable.", "Many devices have weak default passwords and lack regular updates.", "The devices are too complex to manage."],
-    correctAnswers: ["Many devices have weak default passwords and lack regular updates."],
-    difficulty: "Easy",
-    hint: "The sheer number of poorly secured devices is a major threat."
-  },
-  // --- Domain 7.0: Security Operations and Incident Response ---
-  {
-    id: 'q7-1',
-    domain: '7.0 Security Operations and Incident Response',
-    question: "What is the primary purpose of a SIEM (Security Information and Event Management) system?",
-    options: ["To manage user identities.", "To correlate and analyze security events and logs.", "To prevent malware infections.", "To perform vulnerability scans."],
-    correctAnswers: ["To correlate and analyze security events and logs."],
-    difficulty: "Medium",
-    hint: "SIEM systems are all about collecting and analyzing log data from many sources."
-  },
-  {
-    id: 'q7-2',
-    domain: '7.0 Security Operations and Incident Response',
-    question: "What is the first step in the incident response process?",
-    options: ["Containment", "Eradication", "Preparation", "Recovery"],
-    correctAnswers: ["Preparation"],
-    difficulty: "Easy",
-    hint: "You need a plan and resources in place before an incident occurs."
-  },
-  {
-    id: 'q7-3',
-    domain: '7.0 Security Operations and Incident Response',
-    question: "During an incident response, what is the purpose of 'containment'?",
-    options: ["To remove the threat from the network.", "To prevent the incident from causing further damage.", "To restore services to normal operation.", "To document the entire incident response process."],
-    correctAnswers: ["To prevent the incident from causing further damage."],
-    difficulty: "Easy",
-    hint: "You need to stop the bleeding before you can fix the problem."
-  },
-  {
-    id: 'q7-4',
-    domain: '7.0 Security Operations and Incident Response',
-    question: "Which of the following is a type of reconnaissance tool used by attackers?",
-    options: ["Nmap", "Wireshark", "Metasploit", "John the Ripper"],
-    correctAnswers: ["Nmap"],
-    difficulty: "Hard",
-    hint: "This tool is used for network discovery and port scanning."
-  },
-  {
-    id: 'q7-5',
-    domain: '7.0 Security Operations and Incident Response',
-    question: "What is the purpose of a forensic acquisition of a hard drive?",
-    options: ["To create a logical copy of the data.", "To create a bit-for-bit, unalterable copy of the drive.", "To perform a quick scan for malware.", "To restore the drive to a previous state."],
-    correctAnswers: ["To create a bit-for-bit, unalterable copy of the drive."],
-    difficulty: "Medium",
-    hint: "Forensics requires an exact copy to maintain the chain of custody."
-  },
-  // Add more questions for all domains to reach the pool of 200...
-];
-
-const shuffleArray = (array) => {
-  let newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-  }
-  return newArray;
-};
-
-const formatTime = (seconds) => {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
-};
-
-const App = () => {
-  const [examStarted, setExamStarted] = useState(false);
-  const [questions, setQuestions] = useState([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState({});
-  const [showAnswer, setShowAnswer] = useState({});
-  const [flaggedQuestions, setFlaggedQuestions] = useState({});
-  const [timeLeft, setTimeLeft] = useState(75 * 60); // 75 minutes in seconds
-  const [isPaused, setIsPaused] = useState(false);
-  const [examFinished, setExamFinished] = useState(false);
-
-  useEffect(() => {
-    let timer;
-    if (examStarted && !isPaused && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft(prevTime => prevTime - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && examStarted) {
-      setExamFinished(true);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CompTIA Security+ Practice Exam</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Set Inter as the default font -->
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
     }
-    return () => clearInterval(timer);
-  }, [examStarted, isPaused, timeLeft]);
+  </style>
+  <!-- Load React and ReactDOM from CDNs -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Load Babel for JSX transformation in the browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-950 text-gray-200">
 
-  const startNewExam = () => {
-    // Select 100 random questions from the pool
-    const shuffledQuestions = shuffleArray(questionsPool);
-    setQuestions(shuffledQuestions.slice(0, 100));
-    setCurrentQuestionIndex(0);
-    setSelectedAnswers({});
-    setShowAnswer({});
-    setFlaggedQuestions({});
-    setTimeLeft(75 * 60);
-    setIsPaused(false);
-    setExamStarted(true);
-    setExamFinished(false);
-  };
+  <!-- This is the root element where the React application will be rendered -->
+  <div id="root"></div>
 
-  const handleAnswerSelect = (questionId, option) => {
-    setSelectedAnswers(prevAnswers => ({
-      ...prevAnswers,
-      [questionId]: option,
-    }));
-  };
+  <!-- The script with the type "text/babel" will be processed by Babel -->
+  <script type="text/babel">
+    const {
+      useState, useEffect, useRef
+    } = React;
 
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
-    }
-  };
-
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prevIndex => prevIndex - 1);
-    }
-  };
-
-  const handleToggleFlag = (questionId) => {
-    setFlaggedQuestions(prevFlags => ({
-      ...prevFlags,
-      [questionId]: !prevFlags[questionId],
-    }));
-  };
-
-  const currentQuestion = questions[currentQuestionIndex];
-  const selectedOption = selectedAnswers[currentQuestion?.id];
-
-  const getButtonClass = (option) => {
-    let baseClasses = "w-full p-4 text-left rounded-lg transition-colors duration-200 border-2";
-    let colorClasses = "bg-gray-800 border-gray-700 hover:bg-gray-700";
-
-    // Show answer logic
-    if (showAnswer[currentQuestion.id]) {
-      if (questions[currentQuestionIndex].correctAnswers.includes(option)) {
-        colorClasses = "bg-green-700 border-green-500 text-white";
-      } else if (selectedOption === option && !questions[currentQuestionIndex].correctAnswers.includes(option)) {
-        colorClasses = "bg-red-700 border-red-500 text-white";
-      }
-    } else if (selectedOption === option) {
-      colorClasses = "bg-blue-600 border-blue-400 text-white";
-    }
-
-    return `${baseClasses} ${colorClasses}`;
-  };
-
-  if (examFinished) {
-    const totalQuestions = questions.length;
-    let correctAnswers = 0;
-    questions.forEach(q => {
-      if (q.correctAnswers.includes(selectedAnswers[q.id])) {
-        correctAnswers++;
-      }
-    });
-
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
-        <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">
-          Exam Complete!
-        </h1>
-        <p className="text-xl mb-2">You answered {correctAnswers} out of {totalQuestions} questions correctly.</p>
-        <p className="text-lg">Your score: {((correctAnswers / totalQuestions) * 100).toFixed(2)}%</p>
-        <button
-          onClick={startNewExam}
-          className="mt-6 p-4 rounded-lg bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition-colors duration-200"
-        >
-          Start New Exam
-        </button>
-      </div>
+    // Define the necessary icons as simple SVG components to avoid CDN issues
+    const ChevronDown = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <path d="m6 9 6 6 6-6" />
+      </svg>
     );
-  }
 
-  if (!examStarted) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
-        <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">
-          CompTIA Security+ SY0-701 Practice Exam
-        </h1>
-        <p className="text-lg text-center mb-6 max-w-md">
-          This practice exam consists of 100 questions pulled from a pool of 200,
-          covering all the key objectives for the SY0-701 certification. You will have 75 minutes to complete the test.
-        </p>
-        <button
-          onClick={startNewExam}
-          className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200"
-        >
-          Start Exam
-        </button>
-      </div>
+    const ChevronUp = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <path d="m18 15-6-6-6 6" />
+      </svg>
     );
-  }
 
-  if (isPaused) {
-    return (
-      <div className="fixed inset-0 bg-gray-950 bg-opacity-90 backdrop-blur-sm flex flex-col items-center justify-center p-8 z-50">
-        <div className="bg-gray-800 p-10 rounded-xl shadow-2xl text-center max-w-lg w-full">
-          <h2 className="text-4xl font-bold text-red-400 mb-4">Exam Paused</h2>
-          <p className="text-xl text-gray-300 mb-6">
-            Your exam is currently paused. The timer has stopped.
-          </p>
-          <button
-            onClick={() => setIsPaused(false)}
-            className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200 flex items-center justify-center space-x-2 w-full"
-          >
-            <Play size={24} />
-            <span>Resume Exam</span>
-          </button>
-        </div>
-      </div>
+    const CheckCircle2 = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="m9 12 2 2 4-4" />
+      </svg>
     );
-  }
 
-  return (
-    <div className="flex flex-col min-h-screen bg-gray-900 text-gray-200 p-4 sm:p-8 font-['Inter']">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center bg-gray-800 rounded-xl p-4 mb-4 shadow-lg">
-        <div className="text-lg font-bold text-blue-400 mb-2 md:mb-0">
-          CompTIA Security+ SY0-701 Practice Exam
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="text-lg font-mono">
-            Time Left: <span className="text-red-400">{formatTime(timeLeft)}</span>
+    const XCircle = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="m15 9-6 6" />
+        <path d="m9 9 6 6" />
+      </svg>
+    );
+
+    const SkipForward = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <polygon points="5 4 15 12 5 20 5 4" />
+        <line x1="19" x2="19" y1="5" y2="19" />
+      </svg>
+    );
+
+    const ArrowLeft = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <path d="m12 19-7-7 7-7" />
+        <path d="M19 12H5" />
+      </svg>
+    );
+
+    const ArrowRight = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <path d="M5 12h14" />
+        <path d="m12 5 7 7-7 7" />
+      </svg>
+    );
+
+    const Flag = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+        <line x1="4" x2="4" y1="22" y2="15" />
+      </svg>
+    );
+
+    const RefreshCw = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <path d="M23 4v6h-6" />
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+      </svg>
+    );
+
+    const Play = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <polygon points="5 3 19 12 5 21 5 3" />
+      </svg>
+    );
+
+    const Pause = ({ size = 24, className = "" }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <rect x="6" y="4" width="4" height="16" />
+        <rect x="14" y="4" width="4" height="16" />
+      </svg>
+    );
+
+
+    // The question pool
+    const questionsPool = [{
+      id: 'q1-1',
+      domain: '1.0 General Security Concepts',
+      question: "What is the primary purpose of a compensating control?",
+      options: ["To prevent an incident from occurring.", "To recover from an incident.", "To provide an alternative to a primary control that is not feasible.", "To deter potential attackers."],
+      correctAnswers: ["To provide an alternative to a primary control that is not feasible."],
+      difficulty: "Easy",
+      hint: "Think about a situation where you can't implement the ideal security measure. What do you do instead?"
+    }, {
+      id: 'q1-2',
+      domain: '1.0 General Security Concepts',
+      question: "Which of the following describes the 'Integrity' principle of the CIA triad?",
+      options: ["Ensuring data is accessible to authorized users when needed.", "Ensuring data is not altered or destroyed in an unauthorized manner.", "Ensuring data is not disclosed to unauthorized individuals.", "Ensuring the identity of the user is verified."],
+      correctAnswers: ["Ensuring data is not altered or destroyed in an unauthorized manner."],
+      difficulty: "Easy",
+      hint: "Integrity is about the trustworthiness and correctness of data."
+    }, {
+      id: 'q1-3',
+      domain: '1.0 General Security Concepts',
+      question: "Which security control is designed to reduce the impact of an incident?",
+      options: ["Preventative", "Detective", "Corrective", "Deterrent"],
+      correctAnswers: ["Corrective"],
+      difficulty: "Medium",
+      hint: "Think about what happens after a problem has occurred."
+    }, {
+      id: 'q1-4',
+      domain: '1.0 General Security Concepts',
+      question: "What is the security concept that states a user should only have the minimum level of access required to perform their job function?",
+      options: ["Separation of Duties", "Principle of Least Privilege", "Job Rotation", "Mandatory Vacations"],
+      correctAnswers: ["Principle of Least Privilege"],
+      difficulty: "Easy",
+      hint: "The name of the principle is a direct clue about its purpose."
+    }, {
+      id: 'q1-5',
+      domain: '1.0 General Security Concepts',
+      question: "What is the primary purpose of a security policy?",
+      options: ["To define the technical controls for the network.", "To provide a framework for a secure environment.", "To identify specific security threats and vulnerabilities.", "To enforce legal compliance."],
+      correctAnswers: ["To provide a framework for a secure environment."],
+      difficulty: "Medium",
+      hint: "A policy is a high-level statement of intent, not a detailed technical guide."
+    }, {
+      id: 'q1-6',
+      domain: '1.0 General Security Concepts',
+      question: "Which security model is based on a hierarchy of classifications and compartments?",
+      options: ["Bell-LaPadula", "Biba", "Brewer-Nash (Chinese Wall)", "Clark-Wilson"],
+      correctAnswers: ["Bell-LaPadula"],
+      difficulty: "Hard",
+      hint: "This model is primarily concerned with confidentiality and is used by the military."
+    }, {
+      id: 'q1-7',
+      domain: '1.0 General Security Concepts',
+      question: "The security principle of 'Defense in Depth' involves which of the following?",
+      options: ["Using a single, very strong security control.", "Using multiple layers of security controls.", "Ensuring all systems are in a single, secured network segment.", "Implementing only software-based security controls."],
+      correctAnswers: ["Using multiple layers of security controls."],
+      difficulty: "Easy",
+      hint: "Think of it as putting many fences around your house, not just one."
+    }, {
+      id: 'q1-8',
+      domain: '1.0 General Security Concepts',
+      question: "What is the primary goal of a Business Impact Analysis (BIA)?",
+      options: ["To identify critical business functions and the impact of their disruption.", "To test the effectiveness of a disaster recovery plan.", "To calculate the total cost of ownership for IT systems.", "To create a list of all system vulnerabilities."],
+      correctAnswers: ["To identify critical business functions and the impact of their disruption."],
+      difficulty: "Medium",
+      hint: "BIA helps you understand what's most important to your business and what happens if it's not available."
+    }, {
+      id: 'q1-9',
+      domain: '1.0 General Security Concepts',
+      question: "What does the term 'non-repudiation' mean in the context of security?",
+      options: ["Ensuring a user cannot deny they performed an action.", "Ensuring data is not disclosed to unauthorized parties.", "Ensuring data is accessible when needed.", "Ensuring a system is free from vulnerabilities."],
+      correctAnswers: ["Ensuring a user cannot deny they performed an action."],
+      difficulty: "Medium",
+      hint: "This is often achieved through digital signatures."
+    }, {
+      id: 'q1-10',
+      domain: '1.0 General Security Concepts',
+      question: "Which of the following is an example of a technical control?",
+      options: ["A security guard.", "A firewall.", "A security policy.", "A training program."],
+      correctAnswers: ["A firewall."],
+      difficulty: "Easy",
+      hint: "Technical controls are implemented through technology, not people or policies."
+    }, {
+      id: 'q1-11',
+      domain: '1.0 General Security Concepts',
+      question: "What is the purpose of a Security Information and Event Management (SIEM) system?",
+      options: ["To prevent malware from infecting a system.", "To manage physical access to a data center.", "To aggregate and analyze security logs from multiple sources.", "To perform automated vulnerability scans."],
+      correctAnswers: ["To aggregate and analyze security logs from multiple sources."],
+      difficulty: "Medium",
+      hint: "SIEM systems are like a central hub for all your security logs."
+    }, {
+      id: 'q1-12',
+      domain: '1.0 General Security Concepts',
+      question: "The process of verifying a user's identity is known as:",
+      options: ["Authorization", "Authentication", "Accounting", "Auditing"],
+      correctAnswers: ["Authentication"],
+      difficulty: "Easy",
+      hint: "This is the 'A' in the AAA framework (Authentication, Authorization, Accounting)."
+    }, {
+      id: 'q1-13',
+      domain: '1.0 General Security Concepts',
+      question: "What is the 'Availability' principle of the CIA triad?",
+      options: ["Ensuring data is not altered.", "Ensuring data is accessible when needed.", "Ensuring data is not disclosed.", "Ensuring a user cannot deny their actions."],
+      correctAnswers: ["Ensuring data is accessible when needed."],
+      difficulty: "Easy",
+      hint: "Availability is about being able to get to the data or service when you need it."
+    }, {
+      id: 'q1-14',
+      domain: '1.0 General Security Concepts',
+      question: "Which of the following is a physical security control?",
+      options: ["A VPN.", "An antivirus program.", "A security camera.", "An intrusion detection system."],
+      correctAnswers: ["A security camera."],
+      difficulty: "Easy",
+      hint: "Physical controls are tangible things that protect a physical space."
+    }, {
+      id: 'q1-15',
+      domain: '1.0 General Security Concepts',
+      question: "What is the term for a weakness in a system that can be exploited by a threat?",
+      options: ["Threat", "Vulnerability", "Risk", "Exploit"],
+      correctAnswers: ["Vulnerability"],
+      difficulty: "Easy",
+      hint: "It's the 'hole' in the security."
+    }, {
+      id: 'q1-16',
+      domain: '1.0 General Security Concepts',
+      question: "What is the purpose of a threat model?",
+      options: ["To identify potential threats to an application or system.", "To analyze the cost of a security breach.", "To create a disaster recovery plan.", "To enforce a security policy."],
+      correctAnswers: ["To identify potential threats to an application or system."],
+      difficulty: "Medium",
+      hint: "Threat models help you think like an attacker."
+    }, {
+      id: 'q1-17',
+      domain: '1.0 General Security Concepts',
+      question: "What is the primary function of a honeypot?",
+      options: ["To prevent network attacks.", "To attract and trap attackers to study their methods.", "To scan for vulnerabilities in a network.", "To encrypt network traffic."],
+      correctAnswers: ["To attract and trap attackers to study their methods."],
+      difficulty: "Medium",
+      hint: "It's a 'honey trap' for bad actors."
+    }, {
+      id: 'q1-18',
+      domain: '1.0 General Security Concepts',
+      question: "What is the purpose of a disaster recovery plan (DRP)?",
+      options: ["To ensure business continuity during an incident.", "To recover from a major disaster.", "To prevent all security incidents.", "To test system vulnerabilities."],
+      correctAnswers: ["To recover from a major disaster."],
+      difficulty: "Easy",
+      hint: "A DRP is specifically for recovering after a catastrophic event."
+    }, {
+      id: 'q1-19',
+      domain: '1.0 General Security Concepts',
+      question: "What is the term for the set of roles and responsibilities that define who can do what with data?",
+      options: ["Access Control", "Auditing", "Authentication", "Authorization"],
+      correctAnswers: ["Authorization"],
+      difficulty: "Medium",
+      hint: "This is the 'what' a user is allowed to do, after they've been authenticated."
+    }, {
+      id: 'q1-20',
+      domain: '1.0 General Security Concepts',
+      question: "Which of the following describes 'Confidentiality' in the CIA triad?",
+      options: ["Protecting data from unauthorized disclosure.", "Ensuring data is not altered.", "Ensuring data is accessible when needed.", "Ensuring a user cannot deny their actions."],
+      correctAnswers: ["Protecting data from unauthorized disclosure."],
+      difficulty: "Easy",
+      hint: "Confidentiality is about keeping secrets secret."
+    },
+    // Adding more questions for a richer experience
+    {
+      id: 'q2-1',
+      domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+      question: "An attacker sends an email that appears to be from a legitimate company, asking the recipient to click a link to verify their account information. This is an example of what type of attack?",
+      options: ["Phishing", "Vishing", "Smishing", "Spear Phishing"],
+      correctAnswers: ["Phishing"],
+      difficulty: "Easy",
+      hint: "This is a general term for fraudulent attempts to obtain sensitive information via email."
+    }, {
+      id: 'q2-2',
+      domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+      question: "Which of the following is a key characteristic of a zero-day exploit?",
+      options: ["It is a vulnerability that has been publicly disclosed and patched.", "It is a vulnerability that has been discovered but no patch is available.", "It is a vulnerability that is only exploited by nation-state actors.", "It is a vulnerability that affects a new software version."],
+      correctAnswers: ["It is a vulnerability that has been discovered but no patch is available."],
+      difficulty: "Medium",
+      hint: "Think about the timeline. 'Zero-day' refers to the time a vendor has to fix it."
+    }, {
+      id: 'q2-3',
+      domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+      question: "What is the primary goal of a Denial-of-Service (DoS) attack?",
+      options: ["To steal sensitive data.", "To alter data on a server.", "To make a service unavailable to its intended users.", "To gain unauthorized access to a network."],
+      correctAnswers: ["To make a service unavailable to its intended users."],
+      difficulty: "Easy",
+      hint: "The name of the attack gives it away."
+    }, {
+      id: 'q2-4',
+      domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+      question: "A user receives a text message urging them to click a link to win a prize. This is an example of what type of attack?",
+      options: ["Phishing", "Vishing", "Smishing", "Spam"],
+      correctAnswers: ["Smishing"],
+      difficulty: "Easy",
+      hint: "Think about the medium of communication. 'SMS' is key."
+    }, {
+      id: 'q2-5',
+      domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+      question: "Which of the following is a common mitigation for a man-in-the-middle attack?",
+      options: ["Implementing a strong firewall.", "Using HTTPS with a valid SSL/TLS certificate.", "Configuring a WAF (Web Application Firewall).", "Regularly updating antivirus software."],
+      correctAnswers: ["Using HTTPS with a valid SSL/TLS certificate."],
+      difficulty: "Medium",
+      hint: "A man-in-the-middle attack involves intercepting communication. What technology encrypts this communication?"
+    }, {
+      id: 'q2-6',
+      domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+      question: "What is a major characteristic of a SQL injection attack?",
+      options: ["It exploits vulnerabilities in web browsers.", "It alters SQL queries to access unauthorized data.", "It uses social engineering to trick users.", "It floods a server with traffic."],
+      correctAnswers: ["It alters SQL queries to access unauthorized data."],
+      difficulty: "Medium",
+      hint: "The name is a big clue; think about how 'injection' works with databases."
+    }, {
+      id: 'q2-7',
+      domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+      question: "What is the purpose of a buffer overflow attack?",
+      options: ["To steal data from a network packet.", "To write data beyond the allocated memory buffer, potentially executing malicious code.", "To overload a server with requests.", "To guess a user's password using a dictionary."],
+      correctAnswers: ["To write data beyond the allocated memory buffer, potentially executing malicious code."],
+      difficulty: "Hard",
+      hint: "This attack is about manipulating memory boundaries."
+    }, {
+      id: 'q2-8',
+      domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+      question: "Which type of malware self-replicates and spreads to other computers without human intervention?",
+      options: ["Trojan", "Rootkit", "Worm", "Spyware"],
+      correctAnswers: ["Worm"],
+      difficulty: "Easy",
+      hint: "This type of malware is named after a small creature known for its ability to move through its environment."
+    }, {
+      id: 'q2-9',
+      domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+      question: "What is the primary objective of a 'watering hole' attack?",
+      options: ["To target specific individuals with personalized emails.", "To infect a website that is frequently visited by a target group.", "To flood a website with traffic.", "To intercept communication between two parties."],
+      correctAnswers: ["To infect a website that is frequently visited by a target group."],
+      difficulty: "Medium",
+      hint: "Think about how animals gather at a watering hole."
+    }, {
+      id: 'q2-10',
+      domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+      question: "What is a 'smurf' attack?",
+      options: ["A type of social engineering attack.", "A form of malware.", "A type of DDoS attack that uses spoofed ICMP packets.", "A method for password cracking."],
+      correctAnswers: ["A type of DDoS attack that uses spoofed ICMP packets."],
+      difficulty: "Hard",
+      hint: "This is a classic DDoS attack that leverages a broadcast address."
+    }];
+
+
+    const Quiz = () => {
+      const EXAM_TIME_IN_MINUTES = 75;
+      const NUMBER_OF_QUESTIONS = 10;
+      const [questions, setQuestions] = useState([]);
+      const [examStarted, setExamStarted] = useState(false);
+      const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+      const [selectedAnswers, setSelectedAnswers] = useState({});
+      const [isPaused, setIsPaused] = useState(false);
+      const [timeLeft, setTimeLeft] = useState(EXAM_TIME_IN_MINUTES * 60);
+      const [examFinished, setExamFinished] = useState(false);
+      const [showScore, setShowScore] = useState(false);
+      const [showReview, setShowReview] = useState(false);
+      const [isReviewing, setIsReviewing] = useState(false);
+      const [reviewIndex, setReviewIndex] = useState(0);
+      const [flags, setFlags] = useState({});
+      const [expandedDomain, setExpandedDomain] = useState(null);
+      const [shuffledPool, setShuffledPool] = useState([]);
+
+      const timerRef = useRef(null);
+
+      // Start a new exam by shuffling and selecting questions
+      const startNewExam = () => {
+        const shuffled = [...questionsPool].sort(() => 0.5 - Math.random());
+        setShuffledPool(shuffled);
+        setQuestions(shuffled.slice(0, NUMBER_OF_QUESTIONS));
+        setExamStarted(true);
+        setCurrentQuestionIndex(0);
+        setSelectedAnswers({});
+        setFlags({});
+        setTimeLeft(EXAM_TIME_IN_MINUTES * 60);
+        setExamFinished(false);
+        setShowScore(false);
+        setShowReview(false);
+        setIsReviewing(false);
+        setExpandedDomain(null);
+        setIsPaused(false);
+      };
+
+      // Handle the timer logic
+      useEffect(() => {
+        if (examStarted && !isPaused && timeLeft > 0) {
+          timerRef.current = setInterval(() => {
+            setTimeLeft((prevTime) => prevTime - 1);
+          }, 1000);
+        } else if (timeLeft === 0) {
+          finishExam();
+        }
+
+        return () => {
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+          }
+        };
+      }, [examStarted, isPaused, timeLeft]);
+
+      // Handle user's answer selection
+      const handleAnswer = (questionId, option) => {
+        const newSelectedAnswers = { ...selectedAnswers
+        };
+        newSelectedAnswers[questionId] = option;
+        setSelectedAnswers(newSelectedAnswers);
+      };
+
+      // Navigate between questions
+      const navigateQuestion = (direction) => {
+        if (isReviewing) {
+          const newIndex = reviewIndex + direction;
+          if (newIndex >= 0 && newIndex < NUMBER_OF_QUESTIONS) {
+            setReviewIndex(newIndex);
+          }
+        } else {
+          const newIndex = currentQuestionIndex + direction;
+          if (newIndex >= 0 && newIndex < NUMBER_OF_QUESTIONS) {
+            setCurrentQuestionIndex(newIndex);
+          }
+        }
+      };
+
+      // Flag a question for review
+      const toggleFlag = (questionId) => {
+        setFlags((prevFlags) => {
+          const newFlags = { ...prevFlags
+          };
+          newFlags[questionId] = !newFlags[questionId];
+          return newFlags;
+        });
+      };
+
+      // Finish the exam and show the results
+      const finishExam = () => {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+        setExamFinished(true);
+        setShowScore(true);
+        setIsPaused(true);
+      };
+
+      // Calculate the final score
+      const calculateScore = () => {
+        let score = 0;
+        questions.forEach((q) => {
+          const selected = selectedAnswers[q.id];
+          if (selected && q.correctAnswers.includes(selected)) {
+            score++;
+          }
+        });
+        return score;
+      };
+
+      // Format time remaining for display
+      const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+      };
+
+      // Render the start screen
+      if (!examStarted) {
+        return (
+          <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
+            <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">
+              CompTIA Security+ SY0-701 Practice Exam
+            </h1>
+            <p className="text-lg text-center mb-6 max-w-md">
+              This practice exam consists of 10 questions pulled from a pool of 20,
+              covering all the key objectives for the SY0-701 certification. You will have {EXAM_TIME_IN_MINUTES} minutes to complete the test.
+            </p>
+            <button
+              onClick={startNewExam}
+              className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200"
+            >
+              Start Exam
+            </button>
           </div>
-          <button
-            onClick={() => setIsPaused(true)}
-            className="p-2 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200"
-            title="Pause Exam"
-          >
-            <Pause size={20} />
-          </button>
-        </div>
-      </div>
+        );
+      }
 
-      {/* Main Content */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Navigation Panel */}
-        <div className="md:col-span-1 bg-gray-800 rounded-xl p-4 shadow-lg h-min md:sticky md:top-4">
-          <h2 className="text-xl font-semibold mb-4 text-blue-400">Questions ({questions.length})</h2>
-          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-5 lg:grid-cols-6 gap-2">
-            {questions.map((q, index) => (
+      // Render the pause screen
+      if (isPaused && !examFinished) {
+        return (
+          <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
+            <h2 className="text-3xl font-bold mb-4 text-orange-400">Exam Paused</h2>
+            <p className="text-xl mb-6">
+              Time remaining: <span className="font-mono text-white">{formatTime(timeLeft)}</span>
+            </p>
+            <button
+              onClick={() => setIsPaused(false)}
+              className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+            >
+              <Play size={24} />
+              <span>Resume Exam</span>
+            </button>
+          </div>
+        );
+      }
+
+      // Render the exam finished screen with the score
+      if (examFinished && showScore) {
+        const score = calculateScore();
+        return (
+          <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
+            <h2 className="text-4xl font-extrabold text-blue-400 mb-4">Exam Complete!</h2>
+            <p className="text-2xl mb-6">
+              Your Score: <span className="text-green-400 font-bold">{score}</span> out of <span className="text-white font-bold">{NUMBER_OF_QUESTIONS}</span>
+            </p>
+            <div className="flex space-x-4">
               <button
-                key={q.id}
-                onClick={() => setCurrentQuestionIndex(index)}
-                className={`p-2 rounded-lg text-sm font-bold transition-colors duration-200
-                  ${index === currentQuestionIndex ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}
-                  ${selectedAnswers[q.id] ? 'border-2 border-green-500' : ''}
-                  ${flaggedQuestions[q.id] ? 'border-2 border-yellow-500' : ''}
-                `}
+                onClick={() => {
+                  setShowScore(false);
+                  setShowReview(true);
+                  setIsReviewing(true);
+                  setReviewIndex(0);
+                }}
+                className="p-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors duration-200"
               >
-                {index + 1}
+                Review Your Answers
               </button>
-            ))}
-          </div>
-          <div className="mt-6 flex flex-col space-y-2 text-sm text-gray-400">
-            <div className="flex items-center space-x-2">
-              <span className="w-4 h-4 rounded-full border-2 border-green-500 bg-gray-700"></span>
-              <span>Answered</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-4 h-4 rounded-full border-2 border-yellow-500 bg-gray-700"></span>
-              <span>Flagged</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-4 h-4 rounded-full border-2 border-transparent bg-gray-700"></span>
-              <span>Unanswered</span>
+              <button
+                onClick={startNewExam}
+                className="p-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+              >
+                <RefreshCw size={20} />
+                <span>Restart Exam</span>
+              </button>
             </div>
           </div>
-        </div>
+        );
+      }
 
-        {/* Question Panel */}
-        <div className="md:col-span-3 bg-gray-800 rounded-xl p-6 shadow-lg flex flex-col">
-          {currentQuestion && (
-            <>
-              <div className="text-sm text-gray-400 mb-2">
-                Question {currentQuestionIndex + 1} of {questions.length} | Domain: {currentQuestion.domain}
+      // Render the answer review screen
+      if (isReviewing) {
+        const currentQuestion = questions[reviewIndex];
+        const selectedAnswer = selectedAnswers[currentQuestion.id];
+        const isCorrect = currentQuestion.correctAnswers.includes(selectedAnswer);
+
+        return (
+          <div className="max-w-4xl mx-auto p-4 md:p-8">
+            <div className="bg-gray-900 p-8 rounded-lg shadow-xl">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-blue-400">Review Answers</h2>
+                <div className="text-lg font-mono">
+                  Question <span className="text-white">{reviewIndex + 1}</span> of <span className="text-white">{NUMBER_OF_QUESTIONS}</span>
+                </div>
               </div>
-              <h2 className="text-2xl font-bold mb-6">{currentQuestion.question}</h2>
 
-              {/* Options */}
-              <div className="flex-1 space-y-3">
+              <div className="text-xl md:text-2xl font-semibold mb-6 leading-relaxed">
+                {currentQuestion.question}
+              </div>
+
+              <ul className="space-y-4">
                 {currentQuestion.options.map((option, index) => (
-                  <button
+                  <li
                     key={index}
-                    onClick={() => handleAnswerSelect(currentQuestion.id, option)}
-                    className={getButtonClass(option)}
+                    className={`
+                      p-4 rounded-lg cursor-pointer transition-colors duration-200
+                      ${isCorrect && selectedAnswer === option ? 'bg-green-600 border-green-700' : ''}
+                      ${!isCorrect && selectedAnswer === option ? 'bg-red-600 border-red-700' : ''}
+                      ${currentQuestion.correctAnswers.includes(option) ? 'border-2 border-green-500' : 'bg-gray-800 border-gray-700 border-2'}
+                      ${!isCorrect && selectedAnswer !== option && !currentQuestion.correctAnswers.includes(option) ? 'bg-gray-800 border-gray-700' : ''}
+                      text-lg font-medium relative flex items-start
+                    `}
                   >
-                    <span className="mr-4 text-blue-400 font-bold">{String.fromCharCode(65 + index)}.</span>
-                    {option}
-                    {showAnswer[currentQuestion.id] && questions[currentQuestionIndex].correctAnswers.includes(option) && (
-                      <CheckCircle2 className="inline-block ml-2 text-green-400" />
+                    <span className="flex-1">
+                      {option}
+                    </span>
+                    {selectedAnswer === option && (
+                      <span className="ml-4">
+                        {isCorrect ? (
+                          <CheckCircle2 size={24} className="text-white" />
+                        ) : (
+                          <XCircle size={24} className="text-white" />
+                        )}
+                      </span>
                     )}
-                    {showAnswer[currentQuestion.id] && selectedOption === option && !questions[currentQuestionIndex].correctAnswers.includes(option) && (
-                      <XCircle className="inline-block ml-2 text-red-400" />
+                    {currentQuestion.correctAnswers.includes(option) && (
+                      <span className="ml-4">
+                        <CheckCircle2 size={24} className="text-green-300" />
+                      </span>
                     )}
-                  </button>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="flex justify-between mt-8">
+                <button
+                  onClick={() => navigateQuestion(-1)}
+                  disabled={reviewIndex === 0}
+                  className="p-3 rounded-lg bg-gray-700 text-white font-semibold flex items-center space-x-2 hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ArrowLeft size={20} />
+                  <span>Previous</span>
+                </button>
+                <button
+                  onClick={() => navigateQuestion(1)}
+                  disabled={reviewIndex === NUMBER_OF_QUESTIONS - 1}
+                  className="p-3 rounded-lg bg-gray-700 text-white font-semibold flex items-center space-x-2 hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span>Next</span>
+                  <ArrowRight size={20} />
+                </button>
+              </div>
+
+              <div className="mt-8 text-center">
+                <button
+                  onClick={() => setIsReviewing(false)}
+                  className="p-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors duration-200"
+                >
+                  Return to Score
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+
+      // Main exam UI
+      const currentQuestion = questions[currentQuestionIndex];
+      const selectedAnswer = selectedAnswers[currentQuestion.id];
+      const isFlagged = flags[currentQuestion.id];
+      const isLastQuestion = currentQuestionIndex === NUMBER_OF_QUESTIONS - 1;
+
+      return (
+        <div className="max-w-6xl mx-auto p-4 md:p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Sidebar for navigation and progress */}
+            <div className="lg:col-span-1 bg-gray-900 p-6 rounded-lg shadow-xl flex flex-col">
+              <h3 className="text-xl font-bold mb-4 text-blue-400">Exam Progress</h3>
+              <div className="grid grid-cols-5 gap-2 mb-4">
+                {questions.map((q, index) => (
+                  <div
+                    key={q.id}
+                    onClick={() => setCurrentQuestionIndex(index)}
+                    className={`
+                      p-2 text-center rounded-lg font-bold cursor-pointer transition-colors duration-200
+                      ${currentQuestionIndex === index ? 'bg-blue-600 text-white scale-110' : ''}
+                      ${selectedAnswers[q.id] ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300'}
+                      ${flags[q.id] ? 'border-2 border-orange-400' : ''}
+                    `}
+                  >
+                    {index + 1}
+                  </div>
                 ))}
               </div>
 
-              {/* Control Buttons */}
-              <div className="mt-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <div className="flex space-x-4">
+              <div className="flex-grow">
+                <h3 className="text-xl font-bold mt-4 text-blue-400">Domains</h3>
+                <div className="space-y-2 mt-2">
+                  {Array.from(new Set(shuffledPool.map(q => q.domain))).map(domain => (
+                    <div key={domain} className="rounded-lg">
+                      <button
+                        onClick={() => setExpandedDomain(expandedDomain === domain ? null : domain)}
+                        className="flex justify-between items-center w-full p-3 bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors duration-200 rounded-lg"
+                      >
+                        <span className="font-medium text-left">{domain}</span>
+                        {expandedDomain === domain ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </button>
+                      {expandedDomain === domain && (
+                        <ul className="mt-2 space-y-1">
+                          {shuffledPool.filter(q => q.domain === domain).map((q, index) => (
+                            <li
+                              key={q.id}
+                              onClick={() => {
+                                // Find the index of this question in the active exam questions
+                                const activeIndex = questions.findIndex(activeQ => activeQ.id === q.id);
+                                if (activeIndex !== -1) {
+                                  setCurrentQuestionIndex(activeIndex);
+                                  setExpandedDomain(null);
+                                }
+                              }}
+                              className={`
+                                p-2 pl-6 ml-4 border-l-2 text-sm cursor-pointer
+                                ${selectedAnswers[q.id] ? 'border-green-500 text-green-300' : 'border-gray-500 text-gray-400'}
+                                ${currentQuestionIndex === questions.findIndex(activeQ => activeQ.id === q.id) ? 'bg-gray-700 text-white font-bold' : 'hover:bg-gray-800'}
+                                transition-colors duration-200
+                              `}
+                            >
+                              Question {questions.findIndex(activeQ => activeQ.id === q.id) + 1}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-auto space-y-4">
+                <div className="text-center text-xl font-bold">
+                  Time Left: <span className="font-mono text-red-400">{formatTime(timeLeft)}</span>
+                </div>
+                <button
+                  onClick={() => setIsPaused(true)}
+                  className="w-full p-3 rounded-lg bg-orange-600 text-white font-semibold hover:bg-orange-700 transition-colors duration-200 flex items-center justify-center space-x-2"
+                >
+                  <Pause size={20} />
+                  <span>Pause Exam</span>
+                </button>
+                <button
+                  onClick={finishExam}
+                  className="w-full p-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors duration-200"
+                >
+                  End Exam
+                </button>
+              </div>
+            </div>
+
+            {/* Main content area */}
+            <div className="lg:col-span-3 bg-gray-900 p-6 md:p-8 rounded-lg shadow-xl">
+              <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
+                <div className="text-xl md:text-2xl font-bold text-blue-400">
+                  Question {currentQuestionIndex + 1} of {NUMBER_OF_QUESTIONS}
+                </div>
+                <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => setShowAnswer(prev => ({ ...prev, [currentQuestion.id]: !prev[currentQuestion.id] }))}
-                    className="p-3 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors duration-200 flex items-center space-x-2"
-                  >
-                    {showAnswer[currentQuestion.id] ? (
-                      <><ChevronUp size={20} /> <span>Hide Answer</span></>
-                    ) : (
-                      <><ChevronDown size={20} /> <span>Show Answer</span></>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleToggleFlag(currentQuestion.id)}
-                    className={`p-3 rounded-lg flex items-center space-x-2 transition-colors duration-200
-                      ${flaggedQuestions[currentQuestion.id] ? 'bg-yellow-500 text-gray-900 hover:bg-yellow-400' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
+                    onClick={() => toggleFlag(currentQuestion.id)}
+                    className={`
+                      p-2 rounded-lg font-semibold flex items-center space-x-1 transition-colors duration-200
+                      ${isFlagged ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}
+                    `}
                   >
                     <Flag size={20} />
-                    <span>{flaggedQuestions[currentQuestion.id] ? 'Unflag' : 'Flag'}</span>
-                  </button>
-                </div>
-
-                <div className="flex space-x-4">
-                  <button
-                    onClick={handlePreviousQuestion}
-                    disabled={currentQuestionIndex === 0}
-                    className="p-3 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ArrowLeft size={20} />
-                  </button>
-                  <button
-                    onClick={handleNextQuestion}
-                    disabled={currentQuestionIndex === questions.length - 1}
-                    className="p-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ArrowRight size={20} />
+                    <span>{isFlagged ? 'Flagged' : 'Flag for Review'}</span>
                   </button>
                 </div>
               </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
-export default App;
+              <div className="text-2xl font-semibold mb-8 leading-relaxed">
+                {currentQuestion.question}
+              </div>
+
+              <ul className="space-y-4">
+                {currentQuestion.options.map((option, index) => (
+                  <li
+                    key={index}
+                    onClick={() => handleAnswer(currentQuestion.id, option)}
+                    className={`
+                      p-4 rounded-lg cursor-pointer transition-colors duration-200
+                      ${selectedAnswer === option ? 'bg-blue-600 border-blue-700' : 'bg-gray-800 border-gray-700'}
+                      text-lg font-medium border-2
+                    `}
+                  >
+                    {option}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="flex justify-between mt-8">
+                <button
+                  onClick={() => navigateQuestion(-1)}
+                  disabled={currentQuestionIndex === 0}
+                  className="p-3 rounded-lg bg-gray-700 text-white font-semibold flex items-center space-x-2 hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ArrowLeft size={20} />
+                  <span>Previous</span>
+                </button>
+                {isLastQuestion ? (
+                  <button
+                    onClick={finishExam}
+                    className="p-3 rounded-lg bg-green-600 text-white font-semibold flex items-center space-x-2 hover:bg-green-700 transition-colors duration-200"
+                  >
+                    <span>Submit Exam</span>
+                    <CheckCircle2 size={20} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigateQuestion(1)}
+                    className="p-3 rounded-lg bg-gray-700 text-white font-semibold flex items-center space-x-2 hover:bg-gray-600 transition-colors duration-200"
+                  >
+                    <span>Next</span>
+                    <ArrowRight size={20} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Render the Quiz component into the 'root' div
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render( < React.StrictMode > < Quiz / > < /React.StrictMode>);
+  </script>
+
+</body>
+</html>
