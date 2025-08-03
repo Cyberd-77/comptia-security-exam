@@ -1,1354 +1,569 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CompTIA Security+ Practice Exam</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Set Inter as the default font -->
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
+import React, { useState, useEffect } from 'react';
+
+// Tailwind CSS is assumed to be configured in a modern React project
+// You'll also need lucide-react for the icons. You can install it with:
+// npm install lucide-react
+
+import {
+  ChevronDown, ChevronUp, CheckCircle2, XCircle, SkipForward, ArrowLeft, ArrowRight, Flag, RefreshCw, Play, Pause
+} from 'lucide-react';
+
+// The question pool has been moved inside the component for simplicity
+const questionsPool = [
+  // --- Domain 1.0: General Security Concepts ---
+  {
+    id: 'q1-1',
+    domain: '1.0 General Security Concepts',
+    question: "What is the primary purpose of a compensating control?",
+    options: ["To prevent an incident from occurring.", "To recover from an incident.", "To provide an alternative to a primary control that is not feasible.", "To deter potential attackers."],
+    correctAnswers: ["To provide an alternative to a primary control that is not feasible."],
+    difficulty: "Easy",
+    hint: "Think about a situation where you can't implement the ideal security measure. What do you do instead?"
+  },
+  {
+    id: 'q1-2',
+    domain: '1.0 General Security Concepts',
+    question: "Which of the following describes the 'Integrity' principle of the CIA triad?",
+    options: ["Ensuring data is accessible to authorized users when needed.", "Ensuring data is not altered or destroyed in an unauthorized manner.", "Ensuring data is not disclosed to unauthorized individuals.", "Ensuring the identity of a user is verified before access is granted."],
+    correctAnswers: ["Ensuring data is not altered or destroyed in an unauthorized manner."],
+    difficulty: "Easy",
+    hint: "Integrity is about keeping things the way they should be. It's about protecting against unauthorized modification or deletion."
+  },
+  {
+    id: 'q1-3',
+    domain: '1.0 General Security Concepts',
+    question: "A company implements a policy that all employees must use a different password for each application. Which security principle does this best represent?",
+    options: ["Least Privilege", "Defense in Depth", "Separation of Duties", "Non-repudiation"],
+    correctAnswers: ["Defense in Depth"],
+    difficulty: "Medium",
+    hint: "This policy creates multiple layers of security. If one password is compromised, others are still safe. This is a key concept for building a robust security posture."
+  },
+  {
+    id: 'q1-4',
+    domain: '1.0 General Security Concepts',
+    question: "In a physical security context, a fence around a data center is an example of what type of control?",
+    options: ["Administrative", "Technical", "Compensating", "Physical"],
+    correctAnswers: ["Physical"],
+    difficulty: "Easy",
+    hint: "This is a straightforward one. A fence is a tangible object that physically restricts access."
+  },
+  {
+    id: 'q1-5',
+    domain: '1.0 General Security Concepts',
+    question: "Which of the following is the best example of a deterrent control?",
+    options: ["A firewall blocking malicious traffic.", "An alarm system notifying security of a breach.", "A security awareness training program.", "A CCTV camera with a sign that says 'Smile, you're on camera.'"],
+    correctAnswers: ["A CCTV camera with a sign that says 'Smile, you're on camera.'"],
+    difficulty: "Medium",
+    hint: "Deterrent controls are designed to discourage an attacker before they even attempt an action. It's about making them think twice."
+  },
+  // --- Domain 2.0: Threats, Vulnerabilities, and Mitigations ---
+  {
+    id: 'q2-1',
+    domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+    question: "A user receives an email with an attachment that, when opened, encrypts all their files and demands a ransom. This is an example of what type of malware?",
+    options: ["Trojan Horse", "Worm", "Ransomware", "Spyware"],
+    correctAnswers: ["Ransomware"],
+    difficulty: "Easy",
+    hint: "The name of this type of malware literally describes what it does: it holds your data for ransom."
+  },
+  {
+    id: 'q2-2',
+    domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+    question: "What is the primary difference between a vulnerability and an exploit?",
+    options: ["A vulnerability is a weakness, while an exploit is the method used to take advantage of it.", "A vulnerability is a piece of malware, while an exploit is a type of virus.", "A vulnerability is a software bug, while an exploit is a hardware failure.", "A vulnerability is a threat, while an exploit is a risk."],
+    correctAnswers: ["A vulnerability is a weakness, while an exploit is the method used to take advantage of it."],
+    difficulty: "Medium",
+    hint: "A vulnerability is a *potential* problem, a flaw in the system. An exploit is the *action* taken to make that flaw an actual problem."
+  },
+  {
+    id: 'q2-3',
+    domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+    question: "An attacker sends a flood of traffic from a large number of compromised computers to a single server to take it offline. What kind of attack is this?",
+    options: ["Man-in-the-Middle (MitM)", "Phishing", "Distributed Denial-of-Service (DDoS)", "Cross-site Scripting (XSS)"],
+    correctAnswers: ["Distributed Denial-of-Service (DDoS)"],
+    difficulty: "Easy",
+    hint: "The key term here is 'flood of traffic from a large number of compromised computers'. This makes it 'distributed'."
+  },
+  {
+    id: 'q2-4',
+    domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+    question: "Which of the following is a common mitigation technique for a buffer overflow attack?",
+    options: ["Implementing a strong firewall.", "Using input validation and bounds checking.", "Enforcing a strong password policy.", "Encrypting all network traffic."],
+    correctAnswers: ["Using input validation and bounds checking."],
+    difficulty: "Hard",
+    hint: "A buffer overflow happens when an application tries to write data past the end of a fixed-size buffer. The solution is to ensure the input isn't larger than the buffer's capacity."
+  },
+  {
+    id: 'q2-5',
+    domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+    question: "A user is tricked into revealing sensitive information by an attacker pretending to be a legitimate IT support person. This is a classic example of what social engineering technique?",
+    options: ["Phishing", "Vishing", "Pretexting", "Tailgating"],
+    correctAnswers: ["Pretexting"],
+    difficulty: "Medium",
+    hint: "Pretexting involves creating a fictional scenario or a 'pretext' to manipulate someone into giving up information. The attacker has a story."
+  },
+  // --- Domain 3.0: Secure Architecture and Design ---
+  {
+    id: 'q3-1',
+    domain: '3.0 Secure Architecture and Design',
+    question: "Which of the following best describes the purpose of network segmentation?",
+    options: ["To increase network speed.", "To separate different network zones to limit the scope of a breach.", "To provide a backup network in case of failure.", "To connect a LAN to a WAN."],
+    correctAnswers: ["To separate different network zones to limit the scope of a breach."],
+    difficulty: "Medium",
+    hint: "Think of it like watertight compartments on a ship. If one compartment floods, it doesn't sink the whole ship."
+  },
+  {
+    id: 'q3-2',
+    domain: '3.0 Secure Architecture and Design',
+    question: "What is the primary function of a Security Information and Event Management (SIEM) system?",
+    options: ["To prevent malware from entering the network.", "To encrypt data at rest and in transit.", "To centralize and analyze security alerts and log data.", "To manage user identities and access control."],
+    correctAnswers: ["To centralize and analyze security alerts and log data."],
+    difficulty: "Hard",
+    hint: "The 'E' in SIEM stands for 'Event'. A SIEM's main job is to collect and correlate all the security-related events from various sources."
+  },
+  {
+    id: 'q3-3',
+    domain: '3.0 Secure Architecture and Design',
+    question: "Which architectural design principle involves the use of multiple vendors for similar security controls to prevent a single point of failure?",
+    options: ["Least Privilege", "Fail-safe", "Vendor Diversity", "Defense in Depth"],
+    correctAnswers: ["Vendor Diversity"],
+    difficulty: "Medium",
+    hint: "The answer is in the question! Using different vendors for different parts of your security stack is the definition of this principle."
+  },
+  {
+    id: 'q3-4',
+    domain: '3.0 Secure Architecture and Design',
+    question: "What is the purpose of a honey pot?",
+    options: ["To provide a secure environment for sensitive data.", "To attract and trap attackers to learn about their methods.", "To encrypt and protect network traffic.", "To filter malicious emails before they reach the user."],
+    correctAnswers: ["To attract and trap attackers to learn about their methods."],
+    difficulty: "Medium",
+    hint: "Just like its name, a honey pot is a sweet, tempting target designed to lure in attackers so you can observe them."
+  },
+  {
+    id: 'q3-5',
+    domain: '3.0 Secure Architecture and Design',
+    question: "Which of the following is the best way to secure an application's database connection string?",
+    options: ["Store it in a configuration file on the web server.", "Hard-code it directly into the application source code.", "Use a secure secrets management system.", "Encrypt the database but store the key with the connection string."],
+    correctAnswers: ["Use a secure secrets management system."],
+    difficulty: "Hard",
+    hint: "Storing secrets in plain text or hard-coding them is a major security risk. A secrets management system (like Vault or Azure Key Vault) is the industry standard for this."
+  },
+  // --- Domain 4.0: Secure Operations and Incident Response ---
+  {
+    id: 'q4-1',
+    domain: '4.0 Secure Operations and Incident Response',
+    question: "What is the first phase of the incident response process?",
+    options: ["Containment", "Eradication", "Preparation", "Recovery"],
+    correctAnswers: ["Preparation"],
+    difficulty: "Medium",
+    hint: "Before an incident even happens, you need to have a plan in place. This is the foundation of a successful response."
+  },
+  {
+    id: 'q4-2',
+    domain: '4.0 Secure Operations and Incident Response',
+    question: "Which of the following is an example of an 'Eradication' activity in incident response?",
+    options: ["Taking an infected system offline.", "Patching the vulnerability that was exploited.", "Restoring data from a known good backup.", "Notifying all affected parties of the breach."],
+    correctAnswers: ["Patching the vulnerability that was exploited."],
+    difficulty: "Hard",
+    hint: "Eradication is about getting rid of the root cause of the incident. It's not just about stopping the immediate problem (containment), but about eliminating the source."
+  },
+  {
+    id: 'q4-3',
+    domain: '4.0 Secure Operations and Incident Response',
+    question: "The process of collecting, processing, and analyzing digital evidence in a way that is legally admissible is known as what?",
+    options: ["Vulnerability Scanning", "Penetration Testing", "Digital Forensics", "Risk Management"],
+    correctAnswers: ["Digital Forensics"],
+    difficulty: "Easy",
+    hint: "Think about crime scene investigation, but for computers. The goal is to collect evidence without contaminating it."
+  },
+  {
+    id: 'q4-4',
+    domain: '4.0 Secure Operations and Incident Response',
+    question: "What is the primary goal of a Business Continuity Plan (BCP)?",
+    options: ["To recover from a disaster as quickly as possible.", "To ensure critical business functions continue during a disruption.", "To identify and mitigate all potential risks.", "To manage and respond to a security incident."],
+    correctAnswers: ["To ensure critical business functions continue during a disruption."],
+    difficulty: "Medium",
+    hint: "A BCP is not just about recovery (that's the DRP). It's about keeping the business running, even if in a degraded state, when something bad happens."
+  },
+  {
+    id: 'q4-5',
+    domain: '4.0 Secure Operations and Incident Response',
+    question: "Which of the following is a key component of a Disaster Recovery Plan (DRP)?",
+    options: ["A list of all employees and their contact information.", "Procedures for restoring IT infrastructure after a major outage.", "A plan for handling media inquiries after a breach.", "A policy for acceptable use of company assets."],
+    correctAnswers: ["Procedures for restoring IT infrastructure after a major outage."],
+    difficulty: "Easy",
+    hint: "A DRP is specifically about 'Disaster Recovery'. Its focus is on getting the technology back online after a major event."
+  },
+  // --- Domain 5.0: Governance, Risk, and Compliance ---
+  {
+    id: 'q5-1',
+    domain: '5.0 Governance, Risk, and Compliance',
+    question: "What is the purpose of a Risk Register?",
+    options: ["To list all the assets in an organization.", "To track all known threats and vulnerabilities.", "To document and track identified risks, their severity, and mitigation plans.", "To store all security policies and procedures."],
+    correctAnswers: ["To document and track identified risks, their severity, and mitigation plans."],
+    difficulty: "Medium",
+    hint: "A register is a record. In this case, it's a record of all the risks your organization faces, along with what you plan to do about them."
+  },
+  {
+    id: 'q5-2',
+    domain: '5.0 Governance, Risk, and Compliance',
+    question: "Which of the following is an example of an 'Administrative' control?",
+    options: ["A firewall.", "An Intrusion Detection System (IDS).", "A security policy.", "A biometric scanner."],
+    correctAnswers: ["A security policy."],
+    difficulty: "Easy",
+    hint: "Administrative controls are policies, procedures, and guidelines that dictate how people should behave. They are not technical systems."
+  },
+  {
+    id: 'q5-3',
+    domain: '5.0 Governance, Risk, and Compliance',
+    question: "What is the main goal of a Service Level Agreement (SLA)?",
+    options: ["To define the security policies for an organization.", "To specify the level of service a provider is expected to deliver.", "To list all the hardware and software used in a system.", "To document the roles and responsibilities of the security team."],
+    correctAnswers: ["To specify the level of service a provider is expected to deliver."],
+    difficulty: "Easy",
+    hint: "The name says it all. It's an 'Agreement' about the 'Service Level'."
+  },
+  {
+    id: 'q5-4',
+    domain: '5.0 Governance, Risk, and Compliance',
+    question: "Which risk management strategy involves accepting a risk because the cost of mitigating it is higher than the potential loss?",
+    options: ["Risk Acceptance", "Risk Avoidance", "Risk Transference", "Risk Mitigation"],
+    correctAnswers: ["Risk Acceptance"],
+    difficulty: "Easy",
+    hint: "If you decide to 'live with' a risk, you are accepting it."
+  },
+  {
+    id: 'q5-5',
+    domain: '5.0 Governance, Risk, and Compliance',
+    question: "Which of the following is a key objective of a Business Impact Analysis (BIA)?",
+    options: ["To determine the maximum acceptable downtime for business processes.", "To identify all potential threats to an organization.", "To test the effectiveness of a disaster recovery plan.", "To create a list of all company assets."],
+    correctAnswers: ["To determine the maximum acceptable downtime for business processes."],
+    difficulty: "Hard",
+    hint: "A BIA is about understanding the impact of a disruption. A crucial part of that is figuring out how long you can afford to be down before the impact becomes unacceptable."
+  },
+];
+
+
+// Main application component
+export default function App() {
+  const [examStarted, setExamStarted] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userAnswers, setUserAnswers] = useState({});
+  const [isPaused, setIsPaused] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(75 * 60); // 75 minutes in seconds
+  const [shuffledQuestions, setShuffledQuestions] = useState([]);
+  const [flaggedQuestions, setFlaggedQuestions] = useState({});
+  const [showResults, setShowResults] = useState(false);
+  const [score, setScore] = useState(0);
+  // New state to manage the visibility of hints
+  const [openHints, setOpenHints] = useState({});
+
+  useEffect(() => {
+    let timer;
+    if (examStarted && !isPaused && timeRemaining > 0) {
+      timer = setInterval(() => {
+        setTimeRemaining(prevTime => prevTime - 1);
+      }, 1000);
     }
-  </style>
-  <!-- Load React and ReactDOM from CDNs -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- Load Babel for JSX transformation in the browser -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-</head>
-<body class="bg-gray-950 text-gray-200">
+    if (timeRemaining === 0) {
+      handleExamCompletion();
+    }
+    return () => clearInterval(timer);
+  }, [examStarted, isPaused, timeRemaining]);
 
-  <!-- This is the root element where the React application will be rendered -->
-  <div id="root"></div>
+  const startNewExam = () => {
+    // Shuffle the question pool and select 10 questions
+    const shuffledPool = [...questionsPool].sort(() => 0.5 - Math.random());
+    setShuffledQuestions(shuffledPool.slice(0, 10)); // Select 10 for a mini-exam
+    setExamStarted(true);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setIsPaused(false);
+    setTimeRemaining(75 * 60);
+    setFlaggedQuestions({});
+    setShowResults(false);
+    setScore(0);
+    setOpenHints({});
+  };
 
-  <!-- The script with the type "text/babel" will be processed by Babel -->
-  <script type="text/babel">
-    const {
-      useState, useEffect, useRef
-    } = React;
+  const handleAnswerChange = (questionId, option) => {
+    setUserAnswers(prevAnswers => ({
+      ...prevAnswers,
+      [questionId]: option,
+    }));
+  };
 
-    // Define the necessary icons as simple SVG components to avoid CDN issues
-    const ChevronDown = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <path d="m6 9 6 6 6-6" />
-      </svg>
-    );
+  const goToNextQuestion = () => {
+    if (currentQuestionIndex < shuffledQuestions.length - 1) {
+      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+    }
+  };
 
-    const ChevronUp = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <path d="m18 15-6-6-6 6" />
-      </svg>
-    );
+  const goToPreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prevIndex => prevIndex - 1);
+    }
+  };
 
-    const CheckCircle2 = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="m9 12 2 2 4-4" />
-      </svg>
-    );
+  const handleFlagQuestion = (questionId) => {
+    setFlaggedQuestions(prevFlags => ({
+      ...prevFlags,
+      [questionId]: !prevFlags[questionId],
+    }));
+  };
 
-    const XCircle = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="m15 9-6 6" />
-        <path d="m9 9 6 6" />
-      </svg>
-    );
-
-    const SkipForward = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <polygon points="5 4 15 12 5 20 5 4" />
-        <line x1="19" x2="19" y1="5" y2="19" />
-      </svg>
-    );
-
-    const ArrowLeft = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <path d="m12 19-7-7 7-7" />
-        <path d="M19 12H5" />
-      </svg>
-    );
-
-    const ArrowRight = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <path d="M5 12h14" />
-        <path d="m12 5 7 7-7 7" />
-      </svg>
-    );
-
-    const Flag = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-        <line x1="4" x2="4" y1="22" y2="15" />
-      </svg>
-    );
-
-    const RefreshCw = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <path d="M23 4v6h-6" />
-        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-      </svg>
-    );
-
-    const Play = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <polygon points="5 3 19 12 5 21 5 3" />
-      </svg>
-    );
-
-    const Pause = ({ size = 24, className = "" }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <rect x="6" y="4" width="4" height="16" />
-        <rect x="14" y="4" width="4" height="16" />
-      </svg>
-    );
-
-
-    // The question pool, expanded to include over 200 questions across all domains
-    const questionsPool = [
-      // --- Domain 1.0: General Security Concepts ---
-      {
-        id: 'q1-1',
-        domain: '1.0 General Security Concepts',
-        question: "What is the primary purpose of a compensating control?",
-        options: ["To prevent an incident from occurring.", "To recover from an incident.", "To provide an alternative to a primary control that is not feasible.", "To deter potential attackers."],
-        correctAnswers: ["To provide an alternative to a primary control that is not feasible."],
-        difficulty: "Easy",
-        hint: "Think about a situation where you can't implement the ideal security measure. What do you do instead?"
-      }, {
-        id: 'q1-2',
-        domain: '1.0 General Security Concepts',
-        question: "Which of the following describes the 'Integrity' principle of the CIA triad?",
-        options: ["Ensuring data is accessible to authorized users when needed.", "Ensuring data is not altered or destroyed in an unauthorized manner.", "Ensuring data is not disclosed to unauthorized individuals.", "Ensuring the identity of the user is verified."],
-        correctAnswers: ["Ensuring data is not altered or destroyed in an unauthorized manner."],
-        difficulty: "Easy",
-        hint: "Integrity is about the trustworthiness and correctness of data."
-      }, {
-        id: 'q1-3',
-        domain: '1.0 General Security Concepts',
-        question: "Which security control is designed to reduce the impact of an incident?",
-        options: ["Preventative", "Detective", "Corrective", "Deterrent"],
-        correctAnswers: ["Corrective"],
-        difficulty: "Medium",
-        hint: "Think about what happens after a problem has occurred."
-      }, {
-        id: 'q1-4',
-        domain: '1.0 General Security Concepts',
-        question: "What is the security concept that states a user should only have the minimum level of access required to perform their job function?",
-        options: ["Separation of Duties", "Principle of Least Privilege", "Job Rotation", "Mandatory Vacations"],
-        correctAnswers: ["Principle of Least Privilege"],
-        difficulty: "Easy",
-        hint: "The name of the principle is a direct clue about its purpose."
-      }, {
-        id: 'q1-5',
-        domain: '1.0 General Security Concepts',
-        question: "What is the primary purpose of a security policy?",
-        options: ["To define the technical controls for the network.", "To provide a framework for a secure environment.", "To identify specific security threats and vulnerabilities.", "To enforce legal compliance."],
-        correctAnswers: ["To provide a framework for a secure environment."],
-        difficulty: "Medium",
-        hint: "A policy is a high-level statement of intent, not a detailed technical guide."
-      }, {
-        id: 'q1-6',
-        domain: '1.0 General Security Concepts',
-        question: "Which security model is based on a hierarchy of classifications and compartments?",
-        options: ["Bell-LaPadula", "Biba", "Brewer-Nash (Chinese Wall)", "Clark-Wilson"],
-        correctAnswers: ["Bell-LaPadula"],
-        difficulty: "Hard",
-        hint: "This model is primarily concerned with confidentiality and is used by the military."
-      }, {
-        id: 'q1-7',
-        domain: '1.0 General Security Concepts',
-        question: "The security principle of 'Defense in Depth' involves which of the following?",
-        options: ["Using a single, very strong security control.", "Using multiple layers of security controls.", "Ensuring all systems are in a single, secured network segment.", "Implementing only software-based security controls."],
-        correctAnswers: ["Using multiple layers of security controls."],
-        difficulty: "Easy",
-        hint: "Think of it as putting many fences around your house, not just one."
-      }, {
-        id: 'q1-8',
-        domain: '1.0 General Security Concepts',
-        question: "What is the primary goal of a Business Impact Analysis (BIA)?",
-        options: ["To identify critical business functions and the impact of their disruption.", "To test the effectiveness of a disaster recovery plan.", "To calculate the total cost of ownership for IT systems.", "To create a list of all system vulnerabilities."],
-        correctAnswers: ["To identify critical business functions and the impact of their disruption."],
-        difficulty: "Medium",
-        hint: "BIA helps you understand what's most important to your business and what happens if it's not available."
-      }, {
-        id: 'q1-9',
-        domain: '1.0 General Security Concepts',
-        question: "What does the term 'non-repudiation' mean in the context of security?",
-        options: ["Ensuring a user cannot deny they performed an action.", "Ensuring data is not disclosed to unauthorized parties.", "Ensuring data is accessible when needed.", "Ensuring a system is free from vulnerabilities."],
-        correctAnswers: ["Ensuring a user cannot deny they performed an action."],
-        difficulty: "Medium",
-        hint: "This is often achieved through digital signatures."
-      }, {
-        id: 'q1-10',
-        domain: '1.0 General Security Concepts',
-        question: "Which of the following is an example of a technical control?",
-        options: ["A security guard.", "A firewall.", "A security policy.", "A training program."],
-        correctAnswers: ["A firewall."],
-        difficulty: "Easy",
-        hint: "Technical controls are implemented through technology, not people or policies."
-      }, {
-        id: 'q1-11',
-        domain: '1.0 General Security Concepts',
-        question: "What is the purpose of a Security Information and Event Management (SIEM) system?",
-        options: ["To prevent malware from infecting a system.", "To manage physical access to a data center.", "To aggregate and analyze security logs from multiple sources.", "To perform automated vulnerability scans."],
-        correctAnswers: ["To aggregate and analyze security logs from multiple sources."],
-        difficulty: "Medium",
-        hint: "SIEM systems are like a central hub for all your security logs."
-      }, {
-        id: 'q1-12',
-        domain: '1.0 General Security Concepts',
-        question: "The process of verifying a user's identity is known as:",
-        options: ["Authorization", "Authentication", "Accounting", "Auditing"],
-        correctAnswers: ["Authentication"],
-        difficulty: "Easy",
-        hint: "This is the 'A' in the AAA framework (Authentication, Authorization, Accounting)."
-      }, {
-        id: 'q1-13',
-        domain: '1.0 General Security Concepts',
-        question: "What is the 'Availability' principle of the CIA triad?",
-        options: ["Ensuring data is not altered.", "Ensuring data is accessible when needed.", "Ensuring data is not disclosed.", "Ensuring a user cannot deny their actions."],
-        correctAnswers: ["Ensuring data is accessible when needed."],
-        difficulty: "Easy",
-        hint: "Availability is about being able to get to the data or service when you need it."
-      }, {
-        id: 'q1-14',
-        domain: '1.0 General Security Concepts',
-        question: "Which of the following is a physical security control?",
-        options: ["A VPN.", "An antivirus program.", "A security camera.", "An intrusion detection system."],
-        correctAnswers: ["A security camera."],
-        difficulty: "Easy",
-        hint: "Physical controls are tangible things that protect a physical space."
-      }, {
-        id: 'q1-15',
-        domain: '1.0 General Security Concepts',
-        question: "What is the term for a weakness in a system that can be exploited by a threat?",
-        options: ["Threat", "Vulnerability", "Risk", "Exploit"],
-        correctAnswers: ["Vulnerability"],
-        difficulty: "Easy",
-        hint: "It's the 'hole' in the security."
-      }, {
-        id: 'q1-16',
-        domain: '1.0 General Security Concepts',
-        question: "What is the purpose of a threat model?",
-        options: ["To identify potential threats to an application or system.", "To analyze the cost of a security breach.", "To create a disaster recovery plan.", "To enforce a security policy."],
-        correctAnswers: ["To identify potential threats to an application or system."],
-        difficulty: "Medium",
-        hint: "Threat models help you think like an attacker."
-      }, {
-        id: 'q1-17',
-        domain: '1.0 General Security Concepts',
-        question: "What is the primary function of a honeypot?",
-        options: ["To prevent network attacks.", "To attract and trap attackers to study their methods.", "To scan for vulnerabilities in a network.", "To encrypt network traffic."],
-        correctAnswers: ["To attract and trap attackers to study their methods."],
-        difficulty: "Medium",
-        hint: "It's a 'honey trap' for bad actors."
-      }, {
-        id: 'q1-18',
-        domain: '1.0 General Security Concepts',
-        question: "What is the purpose of a disaster recovery plan (DRP)?",
-        options: ["To ensure business continuity during an incident.", "To recover from a major disaster.", "To prevent all security incidents.", "To test system vulnerabilities."],
-        correctAnswers: ["To recover from a major disaster."],
-        difficulty: "Easy",
-        hint: "A DRP is specifically for recovering after a catastrophic event."
-      }, {
-        id: 'q1-19',
-        domain: '1.0 General Security Concepts',
-        question: "What is the term for the set of roles and responsibilities that define who can do what with data?",
-        options: ["Access Control", "Auditing", "Authentication", "Authorization"],
-        correctAnswers: ["Authorization"],
-        difficulty: "Medium",
-        hint: "This is the 'what' a user is allowed to do, after they've been authenticated."
-      }, {
-        id: 'q1-20',
-        domain: '1.0 General Security Concepts',
-        question: "Which of the following describes 'Confidentiality' in the CIA triad?",
-        options: ["Protecting data from unauthorized disclosure.", "Ensuring data is not altered.", "Ensuring data is accessible when needed.", "Ensuring a user cannot deny their actions."],
-        correctAnswers: ["Protecting data from unauthorized disclosure."],
-        difficulty: "Easy",
-        hint: "Confidentiality is about keeping secrets secret."
-      }, {
-        id: 'q1-21',
-        domain: '1.0 General Security Concepts',
-        question: "What is the primary purpose of a security incident response plan?",
-        options: ["To prevent all security incidents.", "To provide a structured approach to dealing with security incidents.", "To punish employees who cause security incidents.", "To ensure legal compliance."],
-        correctAnswers: ["To provide a structured approach to dealing with security incidents."],
-        difficulty: "Medium",
-        hint: "This plan outlines the steps to take when a security event occurs."
-      }, {
-        id: 'q1-22',
-        domain: '1.0 General Security Concepts',
-        question: "Which of the following is an example of an administrative control?",
-        options: ["An intrusion detection system (IDS).", "A locked door to a server room.", "A security awareness training program.", "An encrypted hard drive."],
-        correctAnswers: ["A security awareness training program."],
-        difficulty: "Easy",
-        hint: "Administrative controls are policies, procedures, and training."
-      }, {
-        id: 'q1-23',
-        domain: '1.0 General Security Concepts',
-        question: "What is the goal of a separation of duties policy?",
-        options: ["To ensure that no single person has complete control over a critical task.", "To rotate employees through different jobs.", "To give all employees the same level of access.", "To limit the number of employees who have access to data."],
-        correctAnswers: ["To ensure that no single person has complete control over a critical task."],
-        difficulty: "Medium",
-        hint: "It's about dividing a task into parts so no one person can commit fraud alone."
-      }, {
-        id: 'q1-24',
-        domain: '1.0 General Security Concepts',
-        question: "Which of the following best describes the term 'risk appetite'?",
-        options: ["The total amount of risk a company is willing to accept.", "The amount of risk that is deemed unacceptable.", "The process of identifying and assessing risks.", "The amount of financial loss a company can endure from a security breach."],
-        correctAnswers: ["The total amount of risk a company is willing to accept."],
-        difficulty: "Hard",
-        hint: "It's the level of risk an organization is 'hungry' for, or willing to tolerate."
-      }, {
-        id: 'q1-25',
-        domain: '1.0 General Security Concepts',
-        question: "A company implements a biometric scanner for physical access to its data center. This is an example of what type of control?",
-        options: ["Administrative", "Technical", "Physical", "Compensating"],
-        correctAnswers: ["Physical"],
-        difficulty: "Easy",
-        hint: "This control is about protecting the physical space."
-      }, {
-        id: 'q1-26',
-        domain: '1.0 General Security Concepts',
-        question: "What is a 'Vulnerability Assessment'?",
-        options: ["A test that actively exploits vulnerabilities.", "A process to identify weaknesses in a system or network.", "A process to review security policies.", "A plan for recovering from a disaster."],
-        correctAnswers: ["A process to identify weaknesses in a system or network."],
-        difficulty: "Medium",
-        hint: "The assessment is about finding vulnerabilities, not exploiting them."
-      }, {
-        id: 'q1-27',
-        domain: '1.0 General Security Concepts',
-        question: "Which type of security model is focused on ensuring data integrity?",
-        options: ["Bell-LaPadula", "Biba", "Brewer-Nash (Chinese Wall)", "Clark-Wilson"],
-        correctAnswers: ["Biba"],
-        difficulty: "Hard",
-        hint: "This model prevents lower-level subjects from writing to higher-level objects."
-      }, {
-        id: 'q1-28',
-        domain: '1.0 General Security Concepts',
-        question: "What is the primary objective of a penetration test?",
-        options: ["To identify all vulnerabilities in a system.", "To passively monitor network traffic for threats.", "To simulate a real-world attack to test a system's defenses.", "To develop a security policy."],
-        correctAnswers: ["To simulate a real-world attack to test a system's defenses."],
-        difficulty: "Medium",
-        hint: "Penetration tests are 'active' attacks, unlike vulnerability scans."
-      }, {
-        id: 'q1-29',
-        domain: '1.0 General Security Concepts',
-        question: "The concept of 'due diligence' in security is best described as:",
-        options: ["The implementation of all possible security controls.", "The continuous effort to protect an organization's assets.", "The act of transferring risk to a third party.", "The acceptance of a known risk."],
-        correctAnswers: ["The continuous effort to protect an organization's assets."],
-        difficulty: "Hard",
-        hint: "Due diligence is about an ongoing, reasonable effort to secure things."
-      }, {
-        id: 'q1-30',
-        domain: '1.0 General Security Concepts',
-        question: "Which of the following is a type of detective control?",
-        options: ["A firewall.", "A security awareness training program.", "A CCTV camera.", "A biometric scanner."],
-        correctAnswers: ["A CCTV camera."],
-        difficulty: "Easy",
-        hint: "A detective control is designed to detect a problem after it has occurred."
-      },
-      // --- Domain 2.0: Threats, Vulnerabilities, and Mitigations ---
-      {
-        id: 'q2-1',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "An attacker sends an email that appears to be from a legitimate company, asking the recipient to click a link to verify their account information. This is an example of what type of attack?",
-        options: ["Phishing", "Vishing", "Smishing", "Spear Phishing"],
-        correctAnswers: ["Phishing"],
-        difficulty: "Easy",
-        hint: "This is a general term for fraudulent attempts to obtain sensitive information via email."
-      }, {
-        id: 'q2-2',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which of the following is a key characteristic of a zero-day exploit?",
-        options: ["It is a vulnerability that has been publicly disclosed and patched.", "It is a vulnerability that has been discovered but no patch is available.", "It is a vulnerability that is only exploited by nation-state actors.", "It is a vulnerability that affects a new software version."],
-        correctAnswers: ["It is a vulnerability that has been discovered but no patch is available."],
-        difficulty: "Medium",
-        hint: "Think about the timeline. 'Zero-day' refers to the time a vendor has to fix it."
-      }, {
-        id: 'q2-3',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the primary goal of a Denial-of-Service (DoS) attack?",
-        options: ["To steal sensitive data.", "To alter data on a server.", "To make a service unavailable to its intended users.", "To gain unauthorized access to a network."],
-        correctAnswers: ["To make a service unavailable to its intended users."],
-        difficulty: "Easy",
-        hint: "The name of the attack gives it away."
-      }, {
-        id: 'q2-4',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "A user receives a text message urging them to click a link to win a prize. This is an example of what type of attack?",
-        options: ["Phishing", "Vishing", "Smishing", "Spam"],
-        correctAnswers: ["Smishing"],
-        difficulty: "Easy",
-        hint: "Think about the medium of communication. 'SMS' is key."
-      }, {
-        id: 'q2-5',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which of the following is a common mitigation for a man-in-the-middle attack?",
-        options: ["Implementing a strong firewall.", "Using HTTPS with a valid SSL/TLS certificate.", "Configuring a WAF (Web Application Firewall).", "Regularly updating antivirus software."],
-        correctAnswers: ["Using HTTPS with a valid SSL/TLS certificate."],
-        difficulty: "Medium",
-        hint: "A man-in-the-middle attack involves intercepting communication. What technology encrypts this communication?"
-      }, {
-        id: 'q2-6',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is a major characteristic of a SQL injection attack?",
-        options: ["It exploits vulnerabilities in web browsers.", "It alters SQL queries to access unauthorized data.", "It uses social engineering to trick users.", "It floods a server with traffic."],
-        correctAnswers: ["It alters SQL queries to access unauthorized data."],
-        difficulty: "Medium",
-        hint: "The name is a big clue; think about how 'injection' works with databases."
-      }, {
-        id: 'q2-7',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the purpose of a buffer overflow attack?",
-        options: ["To steal data from a network packet.", "To write data beyond the allocated memory buffer, potentially executing malicious code.", "To overload a server with requests.", "To guess a user's password using a dictionary."],
-        correctAnswers: ["To write data beyond the allocated memory buffer, potentially executing malicious code."],
-        difficulty: "Hard",
-        hint: "This attack is about manipulating memory boundaries."
-      }, {
-        id: 'q2-8',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which type of malware self-replicates and spreads to other computers without human intervention?",
-        options: ["Trojan", "Rootkit", "Worm", "Spyware"],
-        correctAnswers: ["Worm"],
-        difficulty: "Easy",
-        hint: "This type of malware is named after a small creature known for its ability to move through its environment."
-      }, {
-        id: 'q2-9',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the primary objective of a 'watering hole' attack?",
-        options: ["To target specific individuals with personalized emails.", "To infect a website that is frequently visited by a target group.", "To flood a website with traffic.", "To intercept communication between two parties."],
-        correctAnswers: ["To infect a website that is frequently visited by a target group."],
-        difficulty: "Medium",
-        hint: "Think about how animals gather at a watering hole."
-      }, {
-        id: 'q2-10',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is a 'smurf' attack?",
-        options: ["A type of social engineering attack.", "A form of malware.", "A type of DDoS attack that uses spoofed ICMP packets.", "A method for password cracking."],
-        correctAnswers: ["A type of DDoS attack that uses spoofed ICMP packets."],
-        difficulty: "Hard",
-        hint: "This is a classic DDoS attack that leverages a broadcast address."
-      }, {
-        id: 'q2-11',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which attack vector involves tricking a user into executing malicious code by interacting with a trusted website?",
-        options: ["Cross-site Scripting (XSS)", "SQL Injection", "Buffer Overflow", "Denial-of-Service"],
-        correctAnswers: ["Cross-site Scripting (XSS)"],
-        difficulty: "Medium",
-        hint: "This attack leverages a victim's trust in a website to run an attacker's code."
-      }, {
-        id: 'q2-12',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the term for a deceptive network attack where an attacker attempts to fool a DNS server?",
-        options: ["DNS Poisoning", "ARP Poisoning", "Smurf Attack", "SYN Flood"],
-        correctAnswers: ["DNS Poisoning"],
-        difficulty: "Hard",
-        hint: "The goal is to corrupt the DNS cache and redirect traffic."
-      }, {
-        id: 'q2-13',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which type of phishing attack targets a specific, high-profile individual within an organization?",
-        options: ["Phishing", "Vishing", "Smishing", "Whaling"],
-        correctAnswers: ["Whaling"],
-        difficulty: "Medium",
-        hint: "Think of a large sea creature often targeted by hunters."
-      }, {
-        id: 'q2-14',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the term for a type of malware that blocks access to a user's data and demands a ransom to restore it?",
-        options: ["Spyware", "Ransomware", "Trojan", "Adware"],
-        correctAnswers: ["Ransomware"],
-        difficulty: "Easy",
-        hint: "The name directly describes the action: 'ransom' and 'software'."
-      }, {
-        id: 'q2-15',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which attack method involves an attacker sitting between two communicating parties to intercept or modify their communication?",
-        options: ["Zero-day exploit", "Man-in-the-Middle (MitM) attack", "Brute-force attack", "Social engineering"],
-        correctAnswers: ["Man-in-the-Middle (MitM) attack"],
-        difficulty: "Easy",
-        hint: "The name literally describes the attacker's position."
-      }, {
-        id: 'q2-16',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the term for a deceptive network attack where an attacker attempts to fool a DNS server?",
-        options: ["DNS Poisoning", "ARP Poisoning", "Smurf Attack", "SYN Flood"],
-        correctAnswers: ["DNS Poisoning"],
-        difficulty: "Hard",
-        hint: "The goal is to corrupt the DNS cache and redirect traffic."
-      }, {
-        id: 'q2-17',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which type of phishing attack targets a specific, high-profile individual within an organization?",
-        options: ["Phishing", "Vishing", "Smishing", "Whaling"],
-        correctAnswers: ["Whaling"],
-        difficulty: "Medium",
-        hint: "Think of a large sea creature often targeted by hunters."
-      }, {
-        id: 'q2-18',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the term for a type of malware that blocks access to a user's data and demands a ransom to restore it?",
-        options: ["Spyware", "Ransomware", "Trojan", "Adware"],
-        correctAnswers: ["Ransomware"],
-        difficulty: "Easy",
-        hint: "The name directly describes the action: 'ransom' and 'software'."
-      }, {
-        id: 'q2-19',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which attack method involves an attacker sitting between two communicating parties to intercept or modify their communication?",
-        options: ["Zero-day exploit", "Man-in-the-Middle (MitM) attack", "Brute-force attack", "Social engineering"],
-        correctAnswers: ["Man-in-the-Middle (MitM) attack"],
-        difficulty: "Easy",
-        hint: "The name literally describes the attacker's position."
-      }, {
-        id: 'q2-20',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is a 'smurf' attack?",
-        options: ["A type of social engineering attack.", "A form of malware.", "A type of DDoS attack that uses spoofed ICMP packets.", "A method for password cracking."],
-        correctAnswers: ["A type of DDoS attack that uses spoofed ICMP packets."],
-        difficulty: "Hard",
-        hint: "This is a classic DDoS attack that leverages a broadcast address."
-      }, {
-        id: 'q2-21',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which attack vector involves tricking a user into executing malicious code by interacting with a trusted website?",
-        options: ["Cross-site Scripting (XSS)", "SQL Injection", "Buffer Overflow", "Denial-of-Service"],
-        correctAnswers: ["Cross-site Scripting (XSS)"],
-        difficulty: "Medium",
-        hint: "This attack leverages a victim's trust in a website to run an attacker's code."
-      }, {
-        id: 'q2-22',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the term for a deceptive network attack where an attacker attempts to fool a DNS server?",
-        options: ["DNS Poisoning", "ARP Poisoning", "Smurf Attack", "SYN Flood"],
-        correctAnswers: ["DNS Poisoning"],
-        difficulty: "Hard",
-        hint: "The goal is to corrupt the DNS cache and redirect traffic."
-      }, {
-        id: 'q2-23',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which type of phishing attack targets a specific, high-profile individual within an organization?",
-        options: ["Phishing", "Vishing", "Smishing", "Whaling"],
-        correctAnswers: ["Whaling"],
-        difficulty: "Medium",
-        hint: "Think of a large sea creature often targeted by hunters."
-      }, {
-        id: 'q2-24',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the term for a type of malware that blocks access to a user's data and demands a ransom to restore it?",
-        options: ["Spyware", "Ransomware", "Trojan", "Adware"],
-        correctAnswers: ["Ransomware"],
-        difficulty: "Easy",
-        hint: "The name directly describes the action: 'ransom' and 'software'."
-      }, {
-        id: 'q2-25',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which attack method involves an attacker sitting between two communicating parties to intercept or modify their communication?",
-        options: ["Zero-day exploit", "Man-in-the-Middle (MitM) attack", "Brute-force attack", "Social engineering"],
-        correctAnswers: ["Man-in-the-Middle (MitM) attack"],
-        difficulty: "Easy",
-        hint: "The name literally describes the attacker's position."
-      }, {
-        id: 'q2-26',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the term for a deceptive network attack where an attacker attempts to fool a DNS server?",
-        options: ["DNS Poisoning", "ARP Poisoning", "Smurf Attack", "SYN Flood"],
-        correctAnswers: ["DNS Poisoning"],
-        difficulty: "Hard",
-        hint: "The goal is to corrupt the DNS cache and redirect traffic."
-      }, {
-        id: 'q2-27',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which type of phishing attack targets a specific, high-profile individual within an organization?",
-        options: ["Phishing", "Vishing", "Smishing", "Whaling"],
-        correctAnswers: ["Whaling"],
-        difficulty: "Medium",
-        hint: "Think of a large sea creature often targeted by hunters."
-      }, {
-        id: 'q2-28',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is the term for a type of malware that blocks access to a user's data and demands a ransom to restore it?",
-        options: ["Spyware", "Ransomware", "Trojan", "Adware"],
-        correctAnswers: ["Ransomware"],
-        difficulty: "Easy",
-        hint: "The name directly describes the action: 'ransom' and 'software'."
-      }, {
-        id: 'q2-29',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "Which attack method involves an attacker sitting between two communicating parties to intercept or modify their communication?",
-        options: ["Zero-day exploit", "Man-in-the-Middle (MitM) attack", "Brute-force attack", "Social engineering"],
-        correctAnswers: ["Man-in-the-Middle (MitM) attack"],
-        difficulty: "Easy",
-        hint: "The name literally describes the attacker's position."
-      }, {
-        id: 'q2-30',
-        domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-        question: "What is a 'smurf' attack?",
-        options: ["A type of social engineering attack.", "A form of malware.", "A type of DDoS attack that uses spoofed ICMP packets.", "A method for password cracking."],
-        correctAnswers: ["A type of DDoS attack that uses spoofed ICMP packets."],
-        difficulty: "Hard",
-        hint: "This is a classic DDoS attack that leverages a broadcast address."
-      },
-      // --- Domain 3.0: Architecture and Design ---
-      {
-        id: 'q3-1',
-        domain: '3.0 Architecture and Design',
-        question: "Which network device operates at Layer 3 of the OSI model and is used to connect different networks?",
-        options: ["Switch", "Router", "Hub", "Repeater"],
-        correctAnswers: ["Router"],
-        difficulty: "Easy",
-        hint: "This device is responsible for routing data packets between different IP networks."
-      }, {
-        id: 'q3-2',
-        domain: '3.0 Architecture and Design',
-        question: "What is the term for a logical grouping of users or devices that share a common security policy, often used to segment a network?",
-        options: ["VLAN", "VPN", "DMZ", "NAT"],
-        correctAnswers: ["VLAN"],
-        difficulty: "Medium",
-        hint: "This allows you to create separate broadcast domains on a single physical switch."
-      }, {
-        id: 'q3-3',
-        domain: '3.0 Architecture and Design',
-        question: "Which of the following describes a 'demilitarized zone' (DMZ)?",
-        options: ["An internal network segment for highly sensitive data.", "A network segment that is fully trusted and has no security.", "A network segment that separates an internal network from an external network.", "A network used exclusively for guest access."],
-        correctAnswers: ["A network segment that separates an internal network from an external network."],
-        difficulty: "Medium",
-        hint: "It's a buffer zone between your internal and external networks, often used for public-facing servers."
-      }, {
-        id: 'q3-4',
-        domain: '3.0 Architecture and Design',
-        question: "What is the purpose of a Web Application Firewall (WAF)?",
-        options: ["To inspect network packets at Layer 3.", "To protect a web server from web-based attacks like SQL injection and XSS.", "To prevent malware from entering a network.", "To manage firewall rules for an entire network."],
-        correctAnswers: ["To protect a web server from web-based attacks like SQL injection and XSS."],
-        difficulty: "Medium",
-        hint: "A WAF focuses specifically on HTTP/S traffic and application-layer threats."
-      }, {
-        id: 'q3-5',
-        domain: '3.0 Architecture and Design',
-        question: "A security professional wants to test a system's vulnerability to attack without impacting the production environment. Which of the following is the best environment for this task?",
-        options: ["Production", "Staging", "Development", "Sandbox"],
-        correctAnswers: ["Sandbox"],
-        difficulty: "Easy",
-        hint: "A sandbox is an isolated testing environment, often used to analyze malware."
-      }, {
-        id: 'q3-6',
-        domain: '3.0 Architecture and Design',
-        question: "What is the term for a network that spans a small geographic area, such as an office building or campus?",
-        options: ["WAN", "MAN", "LAN", "CAN"],
-        correctAnswers: ["LAN"],
-        difficulty: "Easy",
-        hint: "LAN stands for Local Area Network."
-      }, {
-        id: 'q3-7',
-        domain: '3.0 Architecture and Design',
-        question: "Which type of firewall inspects the entire communication stream from the beginning to the end, rather than just individual packets?",
-        options: ["Packet-filtering firewall", "Stateful firewall", "Stateless firewall", "Proxy firewall"],
-        correctAnswers: ["Stateful firewall"],
-        difficulty: "Medium",
-        hint: "This type of firewall keeps track of the 'state' of the network connections."
-      }, {
-        id: 'q3-8',
-        domain: '3.0 Architecture and Design',
-        question: "What is the main benefit of implementing a Virtual Private Network (VPN)?",
-        options: ["To increase network speed.", "To provide a secure, encrypted connection over an unsecure network.", "To filter malicious traffic from a network.", "To manage user access permissions."],
-        correctAnswers: ["To provide a secure, encrypted connection over an unsecure network."],
-        difficulty: "Easy",
-        hint: "A VPN creates a private tunnel for your data."
-      }, {
-        id: 'q3-9',
-        domain: '3.0 Architecture and Design',
-        question: "Which of the following is an example of a secure boot process?",
-        options: ["BIOS booting a system from a hard drive.", "A system that requires a user to enter a password at boot.", "A system that validates the operating system and drivers before loading them.", "A system that automatically installs updates at boot."],
-        correctAnswers: ["A system that validates the operating system and drivers before loading them."],
-        difficulty: "Medium",
-        hint: "Secure boot is about ensuring the integrity of the boot process itself."
-      }, {
-        id: 'q3-10',
-        domain: '3.0 Architecture and Design',
-        question: "What is the purpose of network segmentation?",
-        options: ["To consolidate all network devices into a single segment.", "To divide a network into smaller, isolated subnets to limit the impact of a breach.", "To prioritize network traffic for a specific application.", "To ensure all users have the same level of network access."],
-        correctAnswers: ["To divide a network into smaller, isolated subnets to limit the impact of a breach."],
-        difficulty: "Easy",
-        hint: "The name implies dividing the network into 'segments'."
-      },
-      // --- Domain 4.0: Identity and Access Management ---
-      {
-        id: 'q4-1',
-        domain: '4.0 Identity and Access Management',
-        question: "What is the term for a system that allows a user to log in once and access multiple related applications without re-authenticating?",
-        options: ["MFA", "SSO", "ACL", "RADIUS"],
-        correctAnswers: ["SSO"],
-        difficulty: "Easy",
-        hint: "This stands for Single Sign-On."
-      }, {
-        id: 'q4-2',
-        domain: '4.0 Identity and Access Management',
-        question: "Which of the following authentication factors is an example of 'something you are'?",
-        options: ["Password", "PIN", "Fingerprint", "Smart card"],
-        correctAnswers: ["Fingerprint"],
-        difficulty: "Easy",
-        hint: "This category includes biometric data."
-      }, {
-        id: 'q4-3',
-        domain: '4.0 Identity and Access Management',
-        question: "What is the primary function of an access control list (ACL)?",
-        options: ["To list all users in a network.", "To define which users or groups can access specific resources.", "To log all access attempts to a resource.", "To manage user passwords."],
-        correctAnswers: ["To define which users or groups can access specific resources."],
-        difficulty: "Medium",
-        hint: "ACLs are rules that specify permissions."
-      }, {
-        id: 'q4-4',
-        domain: '4.0 Identity and Access Management',
-        question: "The security principle that requires two or more people to complete a critical task is known as:",
-        options: ["Principle of Least Privilege", "Separation of Duties", "Job Rotation", "Mandatory Vacations"],
-        correctAnswers: ["Separation of Duties"],
-        difficulty: "Easy",
-        hint: "This prevents any single person from having enough power to cause a security breach on their own."
-      }, {
-        id: 'q4-5',
-        domain: '4.0 Identity and Access Management',
-        question: "Which of the following is a key component of Multi-Factor Authentication (MFA)?",
-        options: ["Using a strong password.", "Using two or more different authentication factors.", "Using a password and a PIN.", "Using a biometric scanner."],
-        correctAnswers: ["Using two or more different authentication factors."],
-        difficulty: "Easy",
-        hint: "MFA requires a combination of factors, such as 'something you know' and 'something you have'."
-      }, {
-        id: 'q4-6',
-        domain: '4.0 Identity and Access Management',
-        question: "What is the primary purpose of a Certificate Authority (CA) in a Public Key Infrastructure (PKI)?",
-        options: ["To manage user passwords.", "To issue and manage digital certificates.", "To encrypt data in transit.", "To provide a secure storage location for private keys."],
-        correctAnswers: ["To issue and manage digital certificates."],
-        difficulty: "Medium",
-        hint: "A CA is the trusted third party that validates the identity of a certificate owner."
-      }, {
-        id: 'q4-7',
-        domain: '4.0 Identity and Access Management',
-        question: "A system that automatically disables a user's account after a period of inactivity is an example of:",
-        options: ["Access Control", "Privilege Escalation", "Account Lifecycle Management", "Separation of Duties"],
-        correctAnswers: ["Account Lifecycle Management"],
-        difficulty: "Hard",
-        hint: "This is a part of the process of managing a user's account from creation to deactivation."
-      }, {
-        id: 'q4-8',
-        domain: '4.0 Identity and Access Management',
-        question: "What is the main difference between Role-Based Access Control (RBAC) and Discretionary Access Control (DAC)?",
-        options: ["RBAC grants permissions based on a user's role, while DAC allows the resource owner to grant permissions.", "RBAC is more secure than DAC.", "RBAC is easier to manage in small organizations.", "DAC is based on a hierarchy of roles."],
-        correctAnswers: ["RBAC grants permissions based on a user's role, while DAC allows the resource owner to grant permissions."],
-        difficulty: "Medium",
-        hint: "RBAC is about the 'role', while DAC is about the 'discretion' of the owner."
-      }, {
-        id: 'q4-9',
-        domain: '4.0 Identity and Access Management',
-        question: "Which protocol is commonly used for centralized authentication and authorization for network access, often with a RADIUS server?",
-        options: ["Kerberos", "SAML", "LDAP", "802.1X"],
-        correctAnswers: ["802.1X"],
-        difficulty: "Hard",
-        hint: "This is a standard for port-based Network Access Control (NAC)."
-      }, {
-        id: 'q4-10',
-        domain: '4.0 Identity and Access Management',
-        question: "What is the purpose of an 'audit trail' or 'log' in access management?",
-        options: ["To prevent unauthorized access.", "To document all access attempts and activities.", "To encrypt user credentials.", "To create a secure tunnel for communication."],
-        correctAnswers: ["To document all access attempts and activities."],
-        difficulty: "Easy",
-        hint: "An audit trail provides a record of who did what and when."
-      },
-      // --- Domain 5.0: Risk Management and Oversight ---
-      {
-        id: 'q5-1',
-        domain: '5.0 Risk Management and Oversight',
-        question: "What is the term for the process of identifying, assessing, and prioritizing risks?",
-        options: ["Risk mitigation", "Risk management", "Risk acceptance", "Risk transference"],
-        correctAnswers: ["Risk management"],
-        difficulty: "Easy",
-        hint: "This is the overall process of dealing with risks."
-      }, {
-        id: 'q5-2',
-        domain: '5.0 Risk Management and Oversight',
-        question: "Which of the following is a quantitative risk assessment method?",
-        options: ["Using a risk matrix (high, medium, low).", "Assigning a monetary value to assets and potential losses.", "Ranking risks based on subjective opinions.", "Conducting interviews with stakeholders."],
-        correctAnswers: ["Assigning a monetary value to assets and potential losses."],
-        difficulty: "Medium",
-        hint: "Quantitative analysis deals with numbers and financial costs."
-      }, {
-        id: 'q5-3',
-        domain: '5.0 Risk Management and Oversight',
-        question: "What is the purpose of a 'Statement of Work' (SOW) in a security context?",
-        options: ["To provide a high-level security policy.", "To define the scope and deliverables of a security project.", "To list all security vulnerabilities.", "To document a security incident."],
-        correctAnswers: ["To define the scope and deliverables of a security project."],
-        difficulty: "Medium",
-        hint: "An SOW is a formal document that defines a project's work."
-      }, {
-        id: 'q5-4',
-        domain: '5.0 Risk Management and Oversight',
-        question: "Which of the following is an example of 'risk transference'?",
-        options: ["Implementing a firewall to block threats.", "Purchasing cyber-insurance to cover potential losses.", "Accepting a risk because the cost of mitigation is too high.", "Shutting down a vulnerable server."],
-        correctAnswers: ["Purchasing cyber-insurance to cover potential losses."],
-        difficulty: "Easy",
-        hint: "Transference means shifting the risk to another party."
-      }, {
-        id: 'q5-5',
-        domain: '5.0 Risk Management and Oversight',
-        question: "What is the purpose of an 'Annualized Loss Expectancy' (ALE)?",
-        options: ["To calculate the single loss expectancy (SLE).", "To estimate the expected financial loss from a risk over a year.", "To identify all potential threats to an asset.", "To determine the likelihood of a vulnerability being exploited."],
-        correctAnswers: ["To estimate the expected financial loss from a risk over a year."],
-        difficulty: "Hard",
-        hint: "ALE is a key metric in quantitative risk analysis."
-      }, {
-        id: 'q5-6',
-        domain: '5.0 Risk Management and Oversight',
-        question: "What is the purpose of a Business Continuity Plan (BCP)?",
-        options: ["To recover from a disaster.", "To ensure that critical business functions can continue during and after a disaster.", "To prevent security incidents.", "To test the effectiveness of security controls."],
-        correctAnswers: ["To ensure that critical business functions can continue during and after a disaster."],
-        difficulty: "Medium",
-        hint: "BCP focuses on keeping the business running, while DRP focuses on recovery."
-      }, {
-        id: 'q5-7',
-        domain: '5.0 Risk Management and Oversight',
-        question: "Which security framework is a globally recognized standard for information security management?",
-        options: ["NIST SP 800-53", "PCI DSS", "ISO 27001", "HIPAA"],
-        correctAnswers: ["ISO 27001"],
-        difficulty: "Medium",
-        hint: "This is a framework, not a regulation, and is used internationally."
-      }, {
-        id: 'q5-8',
-        domain: '5.0 Risk Management and Oversight',
-        question: "What is the purpose of a 'Memorandum of Understanding' (MOU)?",
-        options: ["To legally bind two parties to a security agreement.", "To outline the roles and responsibilities of two or more parties.", "To define the technical requirements of a security system.", "To specify the penalties for non-compliance."],
-        correctAnswers: ["To outline the roles and responsibilities of two or more parties."],
-        difficulty: "Easy",
-        hint: "It's a less formal agreement than a contract."
-      }, {
-        id: 'q5-9',
-        domain: '5.0 Risk Management and Oversight',
-        question: "Which security framework is used by U.S. federal agencies to manage security and privacy controls?",
-        options: ["ISO 27001", "PCI DSS", "NIST RMF", "HIPAA"],
-        correctAnswers: ["NIST RMF"],
-        difficulty: "Medium",
-        hint: "NIST is a U.S. government agency."
-      }, {
-        id: 'q5-10',
-        domain: '5.0 Risk Management and Oversight',
-        question: "What is the primary purpose of a Service Level Agreement (SLA)?",
-        options: ["To define the security policies for a service.", "To specify the level of service a provider will deliver.", "To list all security incidents.", "To perform a risk assessment."],
-        correctAnswers: ["To specify the level of service a provider will deliver."],
-        difficulty: "Medium",
-        hint: "An SLA guarantees a certain level of service."
-      },
-      // Expanded questions to reach over 200 total, covering all domains in depth.
-      // --- Domain 1.0 Additional Questions ---
-      { id: 'q1-31', domain: '1.0 General Security Concepts', question: "What is the purpose of a `vulnerability assessment`?", options: ["To actively exploit vulnerabilities.", "To identify potential weaknesses in a system or network.", "To detect a system that is actively under attack.", "To prevent an attack from happening."], correctAnswers: ["To identify potential weaknesses in a system or network."], difficulty: "Easy", hint: "An assessment is a review or an evaluation." },
-      { id: 'q1-32', domain: '1.0 General Security Concepts', question: "Which term describes a user's access rights based on their job function?", options: ["Role-Based Access Control (RBAC)", "Mandatory Access Control (MAC)", "Discretionary Access Control (DAC)", "Rule-Based Access Control"], correctAnswers: ["Role-Based Access Control (RBAC)"], difficulty: "Easy", hint: "Permissions are tied to the 'role' of the user." },
-      { id: 'q1-33', domain: '1.0 General Security Concepts', question: "What is the main principle of the `zero-trust` security model?", options: ["All internal users are trusted by default.", "All external users are denied access by default.", "Trust is never granted implicitly; all access must be verified.", "Trust is based on the location of the user."], correctAnswers: ["Trust is never granted implicitly; all access must be verified."], difficulty: "Medium", hint: "The name says it all: 'zero' trust." },
-      { id: 'q1-34', domain: '1.0 General Security Concepts', question: "Which security control is focused on monitoring and logging user activities?", options: ["Preventative", "Detective", "Corrective", "Deterrent"], correctAnswers: ["Detective"], difficulty: "Easy", hint: "This control's goal is to 'detect' a problem after it has happened." },
-      { id: 'q1-35', domain: '1.0 General Security Concepts', question: "The process of verifying that the person logging in is who they claim to be is called:", options: ["Authorization", "Identification", "Authentication", "Accounting"], correctAnswers: ["Authentication"], difficulty: "Easy", hint: "It's about proving your identity." },
-      { id: 'q1-36', domain: '1.0 General Security Concepts', question: "What is the primary objective of a security `baseline`?", options: ["To define a minimum security standard for all systems.", "To identify all system vulnerabilities.", "To create a record of all security incidents.", "To test the effectiveness of a disaster recovery plan."], correctAnswers: ["To define a minimum security standard for all systems."], difficulty: "Medium", hint: "A baseline is a starting point or foundation." },
-      { id: 'q1-37', domain: '1.0 General Security Concepts', question: "What is the term for a user's rights to perform actions on a system?", options: ["Authentication", "Privileges", "Roles", "Permissions"], correctAnswers: ["Permissions"], difficulty: "Medium", hint: "These are the specific actions a user is allowed to perform." },
-      { id: 'q1-38', domain: '1.0 General Security Concepts', question: "Which type of control is a physical fence around a data center?", options: ["Technical", "Administrative", "Physical", "Compensating"], correctAnswers: ["Physical"], difficulty: "Easy", hint: "It's a tangible, physical barrier." },
-      { id: 'q1-39', domain: '1.0 General Security Concepts', question: "The concept of `due care` is best described as:", options: ["Transferring risk to a third party.", "Taking reasonable steps to protect an organization's assets.", "Accepting a risk.", "Avoiding a risk altogether."], correctAnswers: ["Taking reasonable steps to protect an organization's assets."], difficulty: "Hard", hint: "Due care is about doing what a 'reasonable person' would do." },
-      { id: 'q1-40', domain: '1.0 General Security Concepts', question: "What is the purpose of a `data classification` policy?", options: ["To label data based on its sensitivity and value.", "To encrypt all data on the network.", "To delete old data.", "To make all data publicly available."], correctAnswers: ["To label data based on its sensitivity and value."], difficulty: "Medium", hint: "Classification is about categorizing data." },
-      { id: 'q1-41', domain: '1.0 General Security Concepts', question: "What is a major component of a `Business Continuity Plan` (BCP)?", options: ["The steps to recover from a complete disaster.", "The procedures to keep a business running during a crisis.", "The process of performing a vulnerability scan.", "The rules for physical access to a building."], correctAnswers: ["The procedures to keep a business running during a crisis."], difficulty: "Medium", hint: "BCP is about maintaining business `continuity`." },
-      // --- Domain 2.0 Additional Questions ---
-      { id: 'q2-31', domain: '2.0 Threats, Vulnerabilities, and Mitigations', question: "What is the term for an attacker attempting to guess a user's password by using a list of common words?", options: ["Brute-force attack", "Dictionary attack", "Rainbow table attack", "Hybrid attack"], correctAnswers: ["Dictionary attack"], difficulty: "Easy", hint: "The name implies the source of the password guesses." },
-      { id: 'q2-32', domain: '2.0 Threats, Vulnerabilities, and Mitigations', question: "Which attack involves an attacker creating a malicious web page that looks like a legitimate one to trick users into entering credentials?", options: ["Phishing", "Spoofing", "Evil Twin", "Pharming"], correctAnswers: ["Pharming"], difficulty: "Medium", hint: "Pharming is a more advanced version of phishing, often without the need for a malicious email." },
-      { id: 'q2-33', domain: '2.0 Threats, Vulnerabilities, and Mitigations', question: "What is a `SYN flood` attack?", options: ["A type of malware.", "A DDoS attack that exploits the TCP three-way handshake.", "A method for SQL injection.", "A social engineering technique."], correctAnswers: ["A DDoS attack that exploits the TCP three-way handshake."], difficulty: "Hard", hint: "It involves sending many SYN packets to a server but never completing the handshake." },
-      { id: 'q2-34', domain: '2.0 Threats, Vulnerabilities, and Mitigations', question: "Which of the following is a symptom of a rootkit infection?", options: ["Slow system performance.", "Unexpected pop-up ads.", "Unauthorized remote control of a system.", "Inability to boot a system."], correctAnswers: ["Unauthorized remote control of a system."], difficulty: "Hard", hint: "Rootkits are designed to give an attacker full control over a system, often without the user knowing." },
-      { id: 'q2-35', domain: '2.0 Threats, Vulnerabilities, and Mitigations', question: "What is the term for a user being tricked into performing an action they didn't intend to, often through a malicious link in an email?", options: ["Cross-site Scripting (XSS)", "Cross-site Request Forgery (CSRF)", "SQL Injection", "Buffer Overflow"], correctAnswers: ["Cross-site Request Forgery (CSRF)"], difficulty: "Medium", hint: "This attack is about 'forging' a request from a trusted user." },
-      { id: 'q2-36', domain: '2.0 Threats, Vulnerabilities, and Mitigations', question: "A hacker uses a vulnerability in an application to gain higher-level privileges on the system. This is called:", options: ["Lateral Movement", "Privilege Escalation", "Reconnaissance", "Persistence"], correctAnswers: ["Privilege Escalation"], difficulty: "Easy", hint: "They are 'escalating' their privileges from a lower level to a higher one." },
-      { id: 'q2-37', domain: '2.0 Threats, Vulnerabilities, and Mitigations', question: "What is the purpose of an `ARP poisoning` attack?", options: ["To redirect network traffic by corrupting a device's ARP cache.", "To overload a server with traffic.", "To steal data from a network packet.", "To guess a user's password."], correctAnswers: ["To redirect network traffic by corrupting a device's ARP cache."], difficulty: "Hard", hint: "ARP is used to map IP addresses to MAC addresses." },
-      { id: 'q2-38', domain: '2.0 Threats, Vulnerabilities, and Mitigations', question: "What is the term for an attack that targets a specific vulnerability that has no available patch?", options: ["Zero-day exploit", "Logic bomb", "Adware", "Backdoor"], correctAnswers: ["Zero-day exploit"], difficulty: "Medium", hint: "A 'zero-day' means the vendor has had zero days to fix it." },
-      { id: 'q2-39', domain: '2.0 Threats, Vulnerabilities, and Mitigations', question: "Which of the following is a type of social engineering attack that targets a specific, high-profile individual?", options: ["Phishing", "Vishing", "Smishing", "Whaling"], correctAnswers: ["Whaling"], difficulty: "Medium", hint: "Think of a large sea creature." },
-      { id: 'q2-40', domain: '2.0 Threats, Vulnerabilities, and Mitigations', question: "What is a `Logic bomb`?", options: ["A type of virus that infects a computer.", "A malicious piece of code that is triggered by a specific event or date.", "A network attack that floods a server with traffic.", "A social engineering attack."], correctAnswers: ["A malicious piece of code that is triggered by a specific event or date."], difficulty: "Medium", hint: "This is a 'bomb' that is set to go off based on a logical condition." },
-      // --- Domain 3.0 Additional Questions ---
-      { id: 'q3-11', domain: '3.0 Architecture and Design', question: "Which of the following is a characteristic of a `Next-Generation Firewall` (NGFW)?", options: ["It only filters traffic based on IP addresses and ports.", "It includes application-aware and user-aware filtering.", "It cannot inspect encrypted traffic.", "It is a stateless firewall."], correctAnswers: ["It includes application-aware and user-aware filtering."], difficulty: "Medium", hint: "NGFWs go beyond traditional firewalls by understanding what applications and users are doing." },
-      { id: 'q3-12', domain: '3.0 Architecture and Design', question: "What is the purpose of `Network Address Translation` (NAT)?", options: ["To assign IP addresses to devices on a network.", "To translate private IP addresses to a single public IP address.", "To encrypt all network traffic.", "To filter malicious traffic."], correctAnswers: ["To translate private IP addresses to a single public IP address."], difficulty: "Easy", hint: "NAT allows many devices on a private network to share one public IP address." },
-      { id: 'q3-13', domain: '3.0 Architecture and Design', question: "A security professional wants to implement a system that detects malicious activity on a network but does not block it. Which of the following should they use?", options: ["Intrusion Prevention System (IPS)", "Intrusion Detection System (IDS)", "Firewall", "Web Application Firewall (WAF)"], correctAnswers: ["Intrusion Detection System (IDS)"], difficulty: "Medium", hint: "An IDS is passive; it 'detects' but doesn't 'prevent'." },
-      { id: 'q3-14', domain: '3.0 Architecture and Design', question: "What is the primary function of a `load balancer`?", options: ["To protect a network from malware.", "To distribute network traffic across multiple servers.", "To manage user access to resources.", "To encrypt all network traffic."], correctAnswers: ["To distribute network traffic across multiple servers."], difficulty: "Easy", hint: "It 'balances' the 'load' on a group of servers." },
-      { id: 'q3-15', domain: '3.0 Architecture and Design', question: "Which of the following is a security benefit of using a `hardware security module` (HSM)?", options: ["It provides a secure storage for cryptographic keys.", "It encrypts a hard drive.", "It protects a network from malware.", "It acts as a firewall."], correctAnswers: ["It provides a secure storage for cryptographic keys."], difficulty: "Hard", hint: "HSMs are specialized hardware devices for key management and cryptographic operations." },
-      { id: 'q3-16', domain: '3.0 Architecture and Design', question: "What is a `security enclave`?", options: ["A network segment for public-facing servers.", "A trusted, isolated area of a system or processor that protects data.", "A network segment for guest access.", "A physical server room."], correctAnswers: ["A trusted, isolated area of a system or processor that protects data."], difficulty: "Hard", hint: "It's a secure 'pocket' within a system." },
-      { id: 'q3-17', domain: '3.0 Architecture and Design', question: "Which type of encryption uses a single, shared key for both encryption and decryption?", options: ["Symmetric", "Asymmetric", "Hashing", "Elliptic Curve Cryptography (ECC)"], correctAnswers: ["Symmetric"], difficulty: "Easy", hint: "The name implies that both sides use the 'same' key." },
-      { id: 'q3-18', domain: '3.0 Architecture and Design', question: "What is the main purpose of a `VPN concentrator`?", options: ["To manage a large number of VPN connections simultaneously.", "To encrypt a single VPN connection.", "To act as a firewall for a VPN.", "To perform user authentication for a VPN."], correctAnswers: ["To manage a large number of VPN connections simultaneously."], difficulty: "Medium", hint: "It 'concentrates' many VPN connections into one device." },
-      { id: 'q3-19', domain: '3.0 Architecture and Design', question: "Which of the following is a core component of a `PKI` (Public Key Infrastructure)?", options: ["Firewalls", "Antivirus software", "Certificate Authority (CA)", "Intrusion Detection Systems (IDS)"], correctAnswers: ["Certificate Authority (CA)"], difficulty: "Easy", hint: "The CA is responsible for issuing and managing certificates." },
-      { id: 'q3-20', domain: '3.0 Architecture and Design', question: "What is the security benefit of using a `proxy server`?", options: ["It can filter and cache web content, protecting internal clients.", "It provides end-to-end encryption for all traffic.", "It assigns IP addresses to devices.", "It manages user access to resources."], correctAnswers: ["It can filter and cache web content, protecting internal clients."], difficulty: "Medium", hint: "A proxy acts as an intermediary for requests from clients." },
-      // --- Domain 4.0 Additional Questions ---
-      { id: 'q4-11', domain: '4.0 Identity and Access Management', question: "Which of the following is an example of `biometric` authentication?", options: ["A password.", "A smart card.", "A retina scan.", "A PIN."], correctAnswers: ["A retina scan."], difficulty: "Easy", hint: "Biometrics use a physical characteristic of a person." },
-      { id: 'q4-12', domain: '4.0 Identity and Access Management', question: "The process of reviewing an account's permissions to ensure they are still appropriate is called:", options: ["Authentication", "Authorization", "Access Review", "Accounting"], correctAnswers: ["Access Review"], difficulty: "Medium", hint: "This is a periodic 'review' of access rights." },
-      { id: 'q4-13', domain: '4.0 Identity and Access Management', question: "What is the purpose of an `LDAP` (Lightweight Directory Access Protocol) server?", options: ["To manage firewall rules.", "To store and manage information about users and network resources.", "To handle DNS requests.", "To provide a secure remote connection."], correctAnswers: ["To store and manage information about users and network resources."], difficulty: "Medium", hint: "LDAP is a protocol for querying and modifying directory services." },
-      { id: 'q4-14', domain: '4.0 Identity and Access Management', question: "Which of the following describes a `password manager`?", options: ["A tool to generate and store strong, unique passwords.", "A network device that stores user credentials.", "A form of biometric authentication.", "A system that enforces password complexity rules."], correctAnswers: ["A tool to generate and store strong, unique passwords."], difficulty: "Easy", hint: "A password manager helps you manage your passwords." },
-      { id: 'q4-15', domain: '4.0 Identity and Access Management', question: "What is the term for a user's account being automatically created, modified, or deleted based on their employment status?", options: ["Authentication", "Account provisioning", "Access control", "Privilege management"], correctAnswers: ["Account provisioning"], difficulty: "Hard", hint: "Provisioning is the process of providing or 'provisioning' an account with resources." },
-      { id: 'q4-16', domain: '4.0 Identity and Access Management', question: "Which of the following is an example of a `context-aware` authentication method?", options: ["Requiring a password and a PIN.", "Requiring a password and a fingerprint.", "Requiring a password only when logging in from an unknown location.", "Using a strong password policy."], correctAnswers: ["Requiring a password only when logging in from an unknown location."], difficulty: "Hard", hint: "This authentication method changes based on the 'context' of the login attempt." },
-      { id: 'q4-17', domain: '4.0 Identity and Access Management', question: "What is the purpose of `Kerberos`?", options: ["A protocol for directory services.", "A centralized authentication protocol for network access.", "A symmetric-key based network authentication protocol.", "A protocol for managing firewall rules."], correctAnswers: ["A symmetric-key based network authentication protocol."], difficulty: "Hard", hint: "Kerberos is a common authentication protocol used in Active Directory." },
-      { id: 'q4-18', domain: '4.0 Identity and Access Management', question: "Which of the following is an example of `federated identity management`?", options: ["A user logs in once and has access to all applications in a company.", "A user's credentials from one organization are accepted by another.", "A user's account is disabled after a period of inactivity.", "A user is authenticated using biometrics."],
-        correctAnswers: ["A user's credentials from one organization are accepted by another."],
-        difficulty: "Medium", hint: "Federated identity management is about creating a 'federation' or trust relationship between organizations."
-      },
-      { id: 'q4-19', domain: '4.0 Identity and Access Management', question: "What is the primary function of `OAUTH`?", options: ["To provide a centralized authentication system.", "To provide a way to securely delegate access to resources without sharing credentials.", "To manage user passwords.", "To encrypt data in transit."], correctAnswers: ["To provide a way to securely delegate access to resources without sharing credentials."], difficulty: "Medium", hint: "OAUTH is about authorization, not authentication." },
-      { id: 'q4-20', domain: '4.0 Identity and Access Management', question: "The process of a user's account being tied to their physical location is an example of what kind of authentication?", options: ["Something you know", "Something you have", "Something you are", "Something you are located"], correctAnswers: ["Something you are located"], difficulty: "Hard", hint: "This is a fourth factor of authentication." },
-      // --- Domain 5.0 Additional Questions ---
-      { id: 'q5-11', domain: '5.0 Risk Management and Oversight', question: "What is a `Qualitative Risk Assessment`?", options: ["An assessment that assigns a monetary value to a risk.", "An assessment that uses subjective terms like 'high', 'medium', and 'low'.", "An assessment that uses a formal mathematical model.", "An assessment that is only performed by external auditors."], correctAnswers: ["An assessment that uses subjective terms like 'high', 'medium', and 'low'."], difficulty: "Easy", hint: "Qualitative analysis deals with qualities, not quantities." },
-      { id: 'q5-12', domain: '5.0 Risk Management and Oversight', question: "What is the purpose of an `Acceptable Use Policy` (AUP)?", options: ["To define what an employee can and cannot do with company resources.", "To define a minimum security standard for systems.", "To outline the steps to take during a security incident.", "To create a record of all security incidents."], correctAnswers: ["To define what an employee can and cannot do with company resources."], difficulty: "Medium", hint: "An AUP defines the 'acceptable use' of resources." },
-      { id: 'q5-13', domain: '5.0 Risk Management and Oversight', question: "Which of the following is a key component of a `Disaster Recovery Plan` (DRP)?", options: ["A list of all IT assets.", "A plan to restore a system to a normal state after a disaster.", "A plan to continue business operations during a disaster.", "A plan to transfer risk to an insurance company."], correctAnswers: ["A plan to restore a system to a normal state after a disaster."], difficulty: "Medium", hint: "A DRP is focused on `recovery`." },
-      { id: 'q5-14', domain: '5.0 Risk Management and Oversight', question: "What is the primary purpose of a `vendor risk assessment`?", options: ["To assess a vendor's financial stability.", "To evaluate the security posture of a third-party vendor.", "To negotiate a contract with a vendor.", "To manage a vendor's physical access to a building."], correctAnswers: ["To evaluate the security posture of a third-party vendor."], difficulty: "Hard", hint: "This assessment is about the security risks posed by a vendor." },
-      { id: 'q5-15', domain: '5.0 Risk Management and Oversight', question: "Which of the following is a key element of a `Business Impact Analysis` (BIA)?", options: ["Determining the financial and operational impact of an outage.", "Developing a disaster recovery plan.", "Conducting a vulnerability scan.", "Performing a penetration test."], correctAnswers: ["Determining the financial and operational impact of an outage."], difficulty: "Medium", hint: "The name 'Business Impact Analysis' describes exactly what it does." },
-      { id: 'q5-16', domain: '5.0 Risk Management and Oversight', question: "What is the purpose of a `runbook` in security operations?", options: ["A list of security policies and procedures.", "A document outlining the steps to take during a specific incident.", "A report of all detected vulnerabilities.", "A log of all security incidents."], correctAnswers: ["A document outlining the steps to take during a specific incident."], difficulty: "Medium", hint: "It's a book that you 'run' through, or follow step-by-step." },
-      { id: 'q5-17', domain: '5.0 Risk Management and Oversight', question: "Which compliance standard is specific to the payment card industry?", options: ["HIPAA", "SOX", "PCI DSS", "GDPR"], correctAnswers: ["PCI DSS"], difficulty: "Easy", hint: "PCI DSS stands for Payment Card Industry Data Security Standard." },
-      { id: 'q5-18', domain: '5.0 Risk Management and Oversight', question: "What is the purpose of a `privacy impact assessment` (PIA)?", options: ["To identify all potential threats to a system.", "To evaluate the privacy risks of a project or system.", "To audit a system for compliance.", "To manage user access permissions."], correctAnswers: ["To evaluate the privacy risks of a project or system."], difficulty: "Hard", hint: "A PIA focuses specifically on privacy." },
-      { id: 'q5-19', domain: '5.0 Risk Management and Oversight', question: "Which of the following is an example of `risk avoidance`?", options: ["Implementing a firewall to block threats.", "Purchasing cyber-insurance.", "Discontinuing a business activity that is too risky.", "Accepting a risk."], correctAnswers: ["Discontinuing a business activity that is too risky."], difficulty: "Easy", hint: "Avoidance means you 'avoid' the risk by not doing the activity." },
-      { id: 'q5-20', domain: '5.0 Risk Management and Oversight', question: "What is the primary objective of a `post-incident review`?", options: ["To punish employees who caused the incident.", "To understand what happened and how to improve the incident response process.", "To restore systems to a normal state.", "To notify stakeholders of the incident."], correctAnswers: ["To understand what happened and how to improve the incident response process."], difficulty: "Medium", hint: "This is a 'lessons learned' meeting after an incident." },
-      // I'll stop here to prevent the output from getting too large, but this is a representative sample of a larger pool.
-    ];
-
-
-    function shuffleArray(array) {
-      const newArray = [...array];
-      for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  const handleExamCompletion = () => {
+    let finalScore = 0;
+    shuffledQuestions.forEach(q => {
+      if (userAnswers[q.id] === q.correctAnswers[0]) {
+        finalScore += 1;
       }
-      return newArray;
-    }
+    });
+    setScore(finalScore);
+    setShowResults(true);
+    setExamStarted(false);
+  };
 
-    const ExamHeader = ({ timeRemaining, isPaused, setIsPaused, currentQuestionIndex, totalQuestions }) => {
-      const formatTime = (seconds) => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
-      };
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  };
 
-      return (
-        <div className="flex items-center justify-between p-4 bg-gray-800 text-gray-200 shadow-md rounded-t-lg">
-          <h1 className="text-xl font-bold text-blue-400">CompTIA Security+ SY0-701</h1>
-          <div className="flex items-center space-x-4">
-            <div className="text-lg font-mono">
-              Question {currentQuestionIndex + 1} of {totalQuestions}
-            </div>
-            <div className="text-lg font-mono px-3 py-1 bg-gray-700 rounded-md">
-              Time: {formatTime(timeRemaining)}
-            </div>
-            <button
-              onClick={() => setIsPaused(true)}
-              className="p-2 rounded-full text-white bg-gray-700 hover:bg-gray-600 transition-colors duration-200"
-              title="Pause Exam"
-            >
-              <Pause size={24} />
-            </button>
-          </div>
-        </div>
-      );
-    };
+  const toggleHint = (questionId) => {
+    setOpenHints(prevHints => ({
+      ...prevHints,
+      [questionId]: !prevHints[questionId],
+    }));
+  };
 
-    const PausedScreen = ({ setIsPaused, startNewExam }) => (
-      <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl animate-fade-in">
-        <h2 className="text-4xl font-extrabold text-white mb-4">Exam Paused</h2>
-        <p className="text-lg text-center mb-6 max-w-md">
-          Your time has stopped. You can resume the exam or end it and review your results.
+  if (showResults) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
+        <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">
+          Exam Results
+        </h1>
+        <p className="text-2xl mb-6">
+          You scored <span className="text-green-400 font-bold">{score}</span> out of <span className="text-blue-400 font-bold">{shuffledQuestions.length}</span>.
         </p>
-        <div className="flex space-x-4">
+        <div className="w-full max-w-2xl mt-8">
+          <h2 className="text-2xl font-bold mb-4">Review Your Answers</h2>
+          {shuffledQuestions.map((q, index) => {
+            const userAnswer = userAnswers[q.id];
+            const isCorrect = userAnswer === q.correctAnswers[0];
+            return (
+              <div key={q.id} className="mb-6 p-4 rounded-lg shadow-md transition-colors duration-200" style={{ backgroundColor: isCorrect ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}>
+                <div className="flex items-start space-x-3 mb-2">
+                  {isCorrect ? (
+                    <CheckCircle2 className="text-green-500 flex-shrink-0 mt-1" size={24} />
+                  ) : (
+                    <XCircle className="text-red-500 flex-shrink-0 mt-1" size={24} />
+                  )}
+                  <p className="text-lg font-semibold">{index + 1}. {q.question}</p>
+                </div>
+                <p className="ml-9 text-md">Your answer: <span className="font-medium">{userAnswer || 'Not answered'}</span></p>
+                {!isCorrect && (
+                  <p className="ml-9 text-md text-green-400">Correct answer: <span className="font-medium">{q.correctAnswers[0]}</span></p>
+                )}
+                {/* Optional: Show hint on review page */}
+                {q.hint && (
+                  <div className="mt-2 ml-9 text-sm text-gray-400 p-2 rounded-md border border-gray-700">
+                    <p className="font-bold">Hint:</p>
+                    <p>{q.hint}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <button
+          onClick={startNewExam}
+          className="mt-8 p-4 rounded-lg bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition-colors duration-200"
+        >
+          Take Another Exam
+        </button>
+      </div>
+    );
+  }
+
+  if (isPaused) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
+        <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">
+          Exam Paused
+        </h1>
+        <p className="text-lg text-center mb-6 max-w-md">
+          Your exam timer has been paused. You have {formatTime(timeRemaining)} remaining.
+        </p>
+        <button
+          onClick={() => setIsPaused(false)}
+          className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+        >
+          <Play size={24} />
+          <span>Resume Exam</span>
+        </button>
+      </div>
+    );
+  }
+
+  if (!examStarted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
+        <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">
+          CompTIA Security+ SY0-701 Practice Exam
+        </h1>
+        <p className="text-lg text-center mb-6 max-w-md">
+          This practice exam consists of 10 questions pulled from a pool of 20,
+          covering all the key objectives for the SY0-701 certification. You will have 75 minutes to complete the test.
+        </p>
+        <button
+          onClick={startNewExam}
+          className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200"
+        >
+          Start Exam
+        </button>
+      </div>
+    );
+  }
+
+  const currentQuestion = shuffledQuestions[currentQuestionIndex];
+
+  return (
+    <div className="p-4 sm:p-8 bg-gray-950 text-gray-100 min-h-screen font-sans">
+      {/* Header and Controls */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-6 p-4 bg-gray-800 rounded-lg shadow-lg">
+        <h1 className="text-2xl font-extrabold text-blue-400 mb-2 sm:mb-0">
+          CompTIA Security+ Exam
+        </h1>
+        <div className="flex items-center space-x-4">
+          <div className="text-lg font-bold">
+            Time Remaining: <span className="text-yellow-400">{formatTime(timeRemaining)}</span>
+          </div>
           <button
-            onClick={() => setIsPaused(false)}
-            className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+            onClick={() => setIsPaused(true)}
+            className="p-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors duration-200"
+            title="Pause Exam"
           >
-            <Play size={24} />
-            <span>Resume Exam</span>
+            <Pause size={20} />
           </button>
           <button
-            onClick={startNewExam}
-            className="p-4 rounded-lg bg-red-600 text-white text-xl font-bold hover:bg-red-700 transition-colors duration-200 flex items-center space-x-2"
+            onClick={() => handleFlagQuestion(currentQuestion.id)}
+            className={`p-2 rounded-full transition-colors duration-200 ${flaggedQuestions[currentQuestion.id] ? 'bg-yellow-500 text-gray-900 hover:bg-yellow-600' : 'bg-gray-600 text-gray-200 hover:bg-gray-500'}`}
+            title="Flag for Review"
           >
-            <RefreshCw size={24} />
-            <span>End & Review</span>
+            <Flag size={20} />
           </button>
         </div>
       </div>
-    );
 
-    const ResultsScreen = ({ score, totalQuestions, startNewExam, examState, markedQuestions }) => {
-      const correctCount = examState.filter(item => item.isCorrect).length;
-
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl animate-fade-in">
-          <h2 className="text-4xl font-extrabold text-blue-400 mb-4">Exam Complete!</h2>
-          <p className="text-lg text-center mb-6 max-w-md">
-            You have completed the practice exam. Here are your results.
-          </p>
-          <div className="flex flex-col items-center space-y-4 mb-8">
-            <div className="text-6xl font-extrabold text-green-400">{correctCount} / {totalQuestions}</div>
-            <div className="text-3xl font-extrabold text-white">Score: {score}%</div>
-          </div>
-          <div className="w-full max-w-2xl bg-gray-800 rounded-lg p-6 overflow-y-auto max-h-96">
-            <h3 className="text-2xl font-bold mb-4 text-white">Question Review</h3>
-            {examState.map((result, index) => (
-              <div key={index} className="mb-4 p-4 border-b border-gray-700 last:border-b-0">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className={`text-lg font-bold ${result.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                    Question {index + 1}: {result.isCorrect ? 'Correct' : 'Incorrect'}
-                  </span>
-                  {result.isCorrect ? <CheckCircle2 className="text-green-400" /> : <XCircle className="text-red-400" />}
-                  {markedQuestions.includes(index) && <Flag className="text-yellow-400" title="Flagged" />}
-                </div>
-                <p className="text-gray-300 mb-2">{result.question.question}</p>
-                <div className="text-sm">
-                  <p className="font-bold text-white">Your Answer:</p>
-                  <p className="text-gray-400">{result.userAnswer}</p>
-                  <p className="font-bold text-white mt-2">Correct Answer:</p>
-                  <p className="text-green-400">{result.question.correctAnswers.join(', ')}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={startNewExam}
-            className="mt-8 p-4 rounded-lg bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
-          >
-            <RefreshCw size={24} />
-            <span>Start New Exam</span>
-          </button>
+      {/* Question and Options Section */}
+      <div className="flex-grow bg-gray-900 p-6 rounded-lg shadow-2xl">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">
+            Question {currentQuestionIndex + 1} of {shuffledQuestions.length}
+          </h2>
+          <span className="text-sm text-gray-400">
+            Domain: {currentQuestion.domain}
+          </span>
         </div>
-      );
-    };
+        
+        {/* Question Text */}
+        <p className="text-xl leading-relaxed mb-6">
+          {currentQuestion.question}
+        </p>
 
-
-    const App = () => {
-      const [examStarted, setExamStarted] = useState(false);
-      const [examFinished, setExamFinished] = useState(false);
-      const [questions, setQuestions] = useState([]);
-      const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-      const [userAnswers, setUserAnswers] = useState({});
-      const [examState, setExamState] = useState([]);
-      const [score, setScore] = useState(0);
-      const [timeRemaining, setTimeRemaining] = useState(75 * 60); // 75 minutes in seconds
-      const [isPaused, setIsPaused] = useState(false);
-      const [markedQuestions, setMarkedQuestions] = useState([]);
-      const intervalRef = useRef(null);
-
-      const startNewExam = () => {
-        // Randomly select 100 questions from the pool
-        const shuffledQuestions = shuffleArray(questionsPool).slice(0, 100);
-        setQuestions(shuffledQuestions);
-        setExamStarted(true);
-        setExamFinished(false);
-        setCurrentQuestionIndex(0);
-        setUserAnswers({});
-        setExamState([]);
-        setScore(0);
-        setTimeRemaining(75 * 60);
-        setIsPaused(false);
-        setMarkedQuestions([]);
-      };
-
-      useEffect(() => {
-        if (examStarted && !isPaused && !examFinished) {
-          intervalRef.current = setInterval(() => {
-            setTimeRemaining((prevTime) => {
-              if (prevTime <= 1) {
-                clearInterval(intervalRef.current);
-                submitExam();
-                return 0;
-              }
-              return prevTime - 1;
-            });
-          }, 1000);
-        } else {
-          clearInterval(intervalRef.current);
-        }
-        // Cleanup on component unmount
-        return () => clearInterval(intervalRef.current);
-      }, [examStarted, isPaused, examFinished]);
-
-      const handleAnswer = (option) => {
-        setUserAnswers({
-          ...userAnswers,
-          [currentQuestionIndex]: option,
-        });
-      };
-
-      const handleFlag = () => {
-        setMarkedQuestions((prevFlags) =>
-          prevFlags.includes(currentQuestionIndex)
-            ? prevFlags.filter((i) => i !== currentQuestionIndex)
-            : [...prevFlags, currentQuestionIndex]
-        );
-      };
-
-      const submitExam = () => {
-        let correctCount = 0;
-        const results = questions.map((question, index) => {
-          const userAnswer = userAnswers[index];
-          const isCorrect = question.correctAnswers.includes(userAnswer);
-          if (isCorrect) {
-            correctCount++;
-          }
-          return {
-            question,
-            userAnswer,
-            isCorrect,
-          };
-        });
-        setExamState(results);
-        setScore(Math.round((correctCount / questions.length) * 100));
-        setExamFinished(true);
-        setExamStarted(false);
-      };
-
-      const renderQuestion = () => {
-        const question = questions[currentQuestionIndex];
-        if (!question) return null;
-
-        return (
-          <div className="flex flex-col h-full">
-            <div className="flex-grow p-6 bg-gray-800 rounded-lg shadow-xl flex flex-col justify-center">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-white mb-4 leading-relaxed">
-                  {question.question}
-                </h2>
-                <div className="space-y-4">
-                  {question.options.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleAnswer(option)}
-                      className={`
-                        w-full text-left p-4 rounded-lg transition-all duration-200 border-2
-                        ${userAnswers[currentQuestionIndex] === option
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-gray-700 text-gray-200 border-gray-700 hover:border-blue-500'
-                        }
-                      `}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 flex justify-between items-center p-4 bg-gray-800 rounded-b-lg shadow-xl">
-              <button
-                onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
-                disabled={currentQuestionIndex === 0}
-                className="flex items-center space-x-2 p-3 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ArrowLeft size={20} />
-                <span>Previous</span>
-              </button>
-              <div className="flex space-x-2">
-                <button
-                  onClick={handleFlag}
-                  className={`p-3 rounded-lg transition-colors duration-200 flex items-center space-x-2 ${
-                    markedQuestions.includes(currentQuestionIndex)
-                      ? 'bg-yellow-500 text-white hover:bg-yellow-600'
-                      : 'bg-gray-700 text-white hover:bg-gray-600'
-                  }`}
-                >
-                  <Flag size={20} />
-                  <span>{markedQuestions.includes(currentQuestionIndex) ? 'Unflag' : 'Flag'}</span>
-                </button>
-                {currentQuestionIndex === questions.length - 1 ? (
-                  <button
-                    onClick={submitExam}
-                    className="flex items-center space-x-2 p-3 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors duration-200"
-                  >
-                    <CheckCircle2 size={20} />
-                    <span>Submit Exam</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setCurrentQuestionIndex(prev => prev + 1)}
-                    className="flex items-center space-x-2 p-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200"
-                  >
-                    <span>Next</span>
-                    <ArrowRight size={20} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      };
-
-      if (!examStarted) {
-        return (
-          <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
-            <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">
-              CompTIA Security+ SY0-701 Practice Exam
-            </h1>
-            <p className="text-lg text-center mb-6 max-w-md">
-              This practice exam consists of 100 questions pulled from a pool of 200,
-              covering all the key objectives for the SY0-701 certification. You will have 75 minutes to complete the test.
-            </p>
+        {/* New: Hint Dropdown */}
+        {currentQuestion.hint && (
+          <div className="mb-6">
             <button
-              onClick={startNewExam}
-              className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200"
+              onClick={() => toggleHint(currentQuestion.id)}
+              className="flex items-center space-x-2 text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200"
             >
-              Start Exam
+              {openHints[currentQuestion.id] ? (
+                <ChevronUp size={20} />
+              ) : (
+                <ChevronDown size={20} />
+              )}
+              <span>{openHints[currentQuestion.id] ? 'Hide Hint' : 'Show Hint'}</span>
             </button>
+            <div
+              className={`mt-2 overflow-hidden transition-all duration-300 ease-in-out ${
+                openHints[currentQuestion.id] ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="p-4 bg-gray-800 rounded-lg text-gray-300 shadow-inner">
+                {currentQuestion.hint}
+              </div>
+            </div>
           </div>
-        );
-      }
+        )}
 
-      if (examFinished) {
-        return (
-          <div className="min-h-screen flex flex-col justify-center items-center bg-gray-950 p-4 font-sans">
-            <ResultsScreen
-              score={score}
-              totalQuestions={questions.length}
-              startNewExam={startNewExam}
-              examState={examState}
-              markedQuestions={markedQuestions}
-            />
-          </div>
-        );
-      }
-
-      if (isPaused) {
-        return (
-          <div className="min-h-screen flex flex-col justify-center items-center bg-gray-950 p-4 font-sans">
-            <PausedScreen setIsPaused={setIsPaused} startNewExam={startNewExam} />
-          </div>
-        );
-      }
-
-      return (
-        <div className="min-h-screen flex flex-col bg-gray-950 text-white p-8 font-sans">
-          <div className="max-w-4xl w-full mx-auto">
-            <ExamHeader
-              timeRemaining={timeRemaining}
-              isPaused={isPaused}
-              setIsPaused={setIsPaused}
-              currentQuestionIndex={currentQuestionIndex}
-              totalQuestions={questions.length}
-            />
-            <div className="mt-4">{renderQuestion()}</div>
-          </div>
+        {/* Options List */}
+        <div className="space-y-4">
+          {currentQuestion.options.map(option => (
+            <button
+              key={option}
+              onClick={() => handleAnswerChange(currentQuestion.id, option)}
+              className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+                userAnswers[currentQuestion.id] === option
+                  ? 'bg-blue-600 border-blue-400 text-white shadow-lg'
+                  : 'bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700 hover:border-blue-500'
+              }`}
+            >
+              {option}
+            </button>
+          ))}
         </div>
-      );
-    };
+      </div>
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+      {/* Navigation and Completion Buttons */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-4 sm:space-y-0 sm:space-x-4">
+        <button
+          onClick={goToPreviousQuestion}
+          disabled={currentQuestionIndex === 0}
+          className="p-3 sm:p-4 rounded-lg bg-gray-700 text-gray-200 font-bold hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 w-full sm:w-auto justify-center"
+        >
+          <ArrowLeft size={20} />
+          <span>Previous</span>
+        </button>
+        {currentQuestionIndex === shuffledQuestions.length - 1 ? (
+          <button
+            onClick={handleExamCompletion}
+            className="p-3 sm:p-4 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 transition-colors duration-200 w-full sm:w-auto"
+          >
+            Finish Exam
+          </button>
+        ) : (
+          <button
+            onClick={goToNextQuestion}
+            className="p-3 sm:p-4 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors duration-200 w-full sm:w-auto flex items-center space-x-2 justify-center"
+          >
+            <span>Next</span>
+            <ArrowRight size={20} />
+          </button>
+        )}
+      </div>
 
-  </script>
-</body>
-</html>
+      {/* Flagged questions quick nav (optional, but useful) */}
+      <div className="mt-8 p-4 bg-gray-800 rounded-lg shadow-lg">
+        <h3 className="text-xl font-bold mb-2 text-blue-300">Question Navigation</h3>
+        <div className="flex flex-wrap gap-2">
+          {shuffledQuestions.map((q, index) => (
+            <button
+              key={q.id}
+              onClick={() => setCurrentQuestionIndex(index)}
+              className={`p-2 w-10 h-10 rounded-lg font-bold transition-all duration-200 ${
+                currentQuestionIndex === index
+                  ? 'bg-blue-600 text-white scale-110'
+                  : flaggedQuestions[q.id]
+                  ? 'bg-yellow-500 text-gray-900 hover:bg-yellow-600'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
