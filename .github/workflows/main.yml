@@ -1,3 +1,5 @@
+# A minor change to force redeployment
+
 name: Deploy to GitHub Pages
 
 on:
