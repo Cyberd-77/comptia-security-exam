@@ -31,296 +31,304 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
-        const { createPortal } = ReactDOM;
+    const { useState, useEffect } = React;
+    const { createPortal } = ReactDOM;
 
-        // Create a component to render Lucide icons.
-        // This is a necessary step because the new CDN doesn't expose
-        // the icons as React components directly.
-        const LucideIcon = ({ name, size = 24, color = 'currentColor', ...props }) => {
-            const icon = lucide.icons[name];
-            if (!icon) {
-                console.error(`Icon "${name}" not found in Lucide library.`);
-                return null;
+    // Create a component to render Lucide icons.
+    // This is a necessary step because the new CDN doesn't expose
+    // the icons as React components directly.
+    const LucideIcon = ({ name, size = 24, color = 'currentColor', ...props }) => {
+        const icon = lucide.icons[name];
+        if (!icon) {
+            console.error(`Icon "${name}" not found in Lucide library.`);
+            return null;
+        }
+        return React.createElement(
+            'svg',
+            {
+                ...props,
+                width: size,
+                height: size,
+                stroke: color,
+                'stroke-width': 2,
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round',
+                xmlns: 'http://www.w3.org/2000/svg',
+                viewBox: '0 0 24 24',
+                fill: 'none',
+            },
+            icon.map((path, index) => React.createElement('path', { key: index, d: path }))
+        );
+    };
+
+    const questionsPool = [
+        // --- Domain 1.0: General Security Concepts ---
+        {
+            id: 'q1-1',
+            domain: '1.0 General Security Concepts',
+            question: "What is the primary purpose of a compensating control?",
+            options: ["To prevent an incident from occurring.", "To recover from an incident.", "To provide an alternative to a primary control that is not feasible.", "To deter potential attackers."],
+            correctAnswers: ["To provide an alternative to a primary control that is not feasible."],
+            difficulty: "Easy",
+            hint: "Think about a situation where you can't implement the ideal security measure. What do you do instead?"
+        },
+        {
+            id: 'q1-2',
+            domain: '1.0 General Security Concepts',
+            question: "Which of the following describes the 'Integrity' principle of the CIA triad?",
+            options: ["Ensuring data is accessible to authorized users when needed.", "Ensuring data is not altered or destroyed in an unauthorized manner.", "Ensuring data is not disclosed to unauthorized individuals.", "Ensuring the system can withstand a denial-of-service attack."],
+            correctAnswers: ["Ensuring data is not altered or destroyed in an unauthorized manner."],
+            difficulty: "Easy",
+            hint: "Think about the state of the data itself. Is it correct and unaltered?"
+        },
+        // --- Domain 2.0: Threats, Vulnerabilities, and Mitigations ---
+        {
+            id: 'q2-1',
+            domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+            question: "A company's server is infected with malware that encrypts all of its files and demands a ransom payment to restore access. What type of attack is this?",
+            options: ["Phishing", "Spoofing", "Ransomware", "Denial of Service"],
+            correctAnswers: ["Ransomware"],
+            difficulty: "Medium",
+            hint: "The name of this attack is a combination of two words: a type of demand and a type of software."
+        },
+        {
+            id: 'q2-2',
+            domain: '2.0 Threats, Vulnerabilities, and Mitigations',
+            question: "Which of the following is an example of social engineering?",
+            options: ["Scanning a network for open ports.", "Using a brute-force attack to guess a password.", "Pretending to be an IT support technician to get a user's password.", "Exploiting a zero-day vulnerability in a web browser."],
+            correctAnswers: ["Pretending to be an IT support technician to get a user's password."],
+            difficulty: "Medium",
+            hint: "Social engineering is about manipulating people, not technology."
+        },
+        // --- Domain 3.0: Security Architecture ---
+        {
+            id: 'q3-1',
+            domain: '3.0 Security Architecture',
+            question: "What is the primary benefit of using a Demilitarized Zone (DMZ)?",
+            options: ["To isolate internal servers from the internet.", "To prevent internal users from accessing the internet.", "To host public-facing servers without exposing the internal network.", "To encrypt all traffic between internal and external networks."],
+            correctAnswers: ["To host public-facing servers without exposing the internal network."],
+            difficulty: "Hard",
+            hint: "A DMZ is like a buffer zone. It sits between two other networks."
+        },
+        {
+            id: 'q3-2',
+            domain: '3.0 Security Architecture',
+            question: "Which security control is a software-based solution that monitors and controls incoming and outgoing network traffic based on a defined set of security rules?",
+            options: ["Intrusion Detection System (IDS)", "Intrusion Prevention System (IPS)", "Firewall", "Router"],
+            correctAnswers: ["Firewall"],
+            difficulty: "Medium",
+            hint: "This control is a foundational element of network security and is often the first line of defense."
+        },
+        // --- Domain 4.0: Secure Operations and Incident Response ---
+        {
+            id: 'q4-1',
+            domain: '4.0 Secure Operations and Incident Response',
+            question: "What is the first step in the incident response process?",
+            options: ["Eradication", "Containment", "Preparation", "Detection and Analysis"],
+            correctAnswers: ["Preparation"],
+            difficulty: "Medium",
+            hint: "Before an incident even occurs, what should you have in place?"
+        },
+        {
+            id: 'q4-2',
+            domain: '4.0 Secure Operations and Incident Response',
+            question: "During a forensics investigation, what is the best practice for handling digital evidence?",
+            options: ["Work directly on the original drive to save time.", "Make a copy of the drive and work only on the copy.", "Use a write-blocker to prevent changes to the original drive.", "Encrypt the drive and then work on the original."],
+            correctAnswers: ["Use a write-blocker to prevent changes to the original drive."],
+            difficulty: "Hard",
+            hint: "The goal is to maintain the integrity of the evidence. What tool physically prevents any changes?"
+        },
+        // --- Domain 5.0: Governance, Risk, and Compliance ---
+        {
+            id: 'q5-1',
+            domain: '5.0 Governance, Risk, and Compliance',
+            question: "A company is performing an assessment to identify potential threats and vulnerabilities to its assets. What is this process called?",
+            options: ["Risk management", "Vulnerability scanning", "Penetration testing", "Threat modeling"],
+            correctAnswers: ["Threat modeling"],
+            difficulty: "Medium",
+            hint: "This process involves creating a model to understand how threats might affect a system."
+        },
+        {
+            id: 'q5-2',
+            domain: '5.0 Governance, Risk, and Compliance',
+            question: "What is the purpose of a Business Impact Analysis (BIA)?",
+            options: ["To identify critical business functions and the impact of their loss.", "To determine the cost of a new security system.", "To audit compliance with regulations.", "To create a disaster recovery plan."],
+            correctAnswers: ["To identify critical business functions and the impact of their loss."],
+            difficulty: "Hard",
+            hint: "Think about the 'impact' part of the name. What are the consequences of a business disruption?"
+        },
+    ];
+
+    const totalQuestions = 10;
+    const examDurationMinutes = 75;
+
+    const Modal = ({ children, onClose }) => {
+        return createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 p-4">
+                <div className="bg-gray-800 rounded-lg shadow-2xl w-full max-w-xl p-8 transform transition-all scale-100 opacity-100 relative">
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-200 transition-colors"
+                    >
+                        <LucideIcon name="X" size={24} />
+                    </button>
+                    {children}
+                </div>
+            </div>,
+            document.body
+        );
+    };
+
+    const App = () => {
+        const [examStarted, setExamStarted] = useState(false);
+        const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+        const [examQuestions, setExamQuestions] = useState([]);
+        const [userAnswers, setUserAnswers] = useState({});
+        const [flaggedQuestions, setFlaggedQuestions] = useState({});
+        const [timeLeft, setTimeLeft] = useState(examDurationMinutes * 60);
+        const [isPaused, setIsPaused] = useState(false);
+        const [examFinished, setExamFinished] = useState(false);
+        const [showResults, setShowResults] = useState(false);
+        const [results, setResults] = useState(null);
+        const [showModal, setShowModal] = useState(false);
+
+        useEffect(() => {
+            let timer;
+            if (examStarted && !isPaused && timeLeft > 0) {
+                timer = setInterval(() => {
+                    setTimeLeft(prevTime => prevTime - 1);
+                }, 1000);
             }
-            return React.createElement(
-                'svg',
-                {
-                    ...props,
-                    width: size,
-                    height: size,
-                    stroke: color,
-                    'stroke-width': 2,
-                    'stroke-linecap': 'round',
-                    'stroke-linejoin': 'round',
-                    xmlns: 'http://www.w3.org/2000/svg',
-                    viewBox: '0 0 24 24',
-                    fill: 'none',
-                },
-                icon.map((path, index) => React.createElement('path', { key: index, d: path }))
-            );
+            if (timeLeft === 0 && examStarted) {
+                finishExam();
+            }
+            return () => clearInterval(timer);
+        }, [examStarted, isPaused, timeLeft]);
+
+        const startNewExam = () => {
+            const shuffledQuestions = [...questionsPool].sort(() => 0.5 - Math.random());
+            setExamQuestions(shuffledQuestions.slice(0, totalQuestions));
+            setExamStarted(true);
+            setCurrentQuestionIndex(0);
+            setUserAnswers({});
+            setFlaggedQuestions({});
+            setTimeLeft(examDurationMinutes * 60);
+            setIsPaused(false);
+            setExamFinished(false);
+            setShowResults(false);
+            setResults(null);
+            setShowModal(false);
         };
 
-        // The question pool has been moved inside the component for simplicity
-        const questionsPool = [
-            // --- Domain 1.0: General Security Concepts ---
-            {
-                id: 'q1-1',
-                domain: '1.0 General Security Concepts',
-                question: "What is the primary purpose of a compensating control?",
-                options: ["To prevent an incident from occurring.", "To recover from an incident.", "To provide an alternative to a primary control that is not feasible.", "To deter potential attackers."],
-                correctAnswers: ["To provide an alternative to a primary control that is not feasible."],
-                difficulty: "Easy",
-                hint: "Think about a situation where you can't implement the ideal security measure. What do you do instead?"
-            },
-            {
-                id: 'q1-2',
-                domain: '1.0 General Security Concepts',
-                question: "Which of the following describes the 'Integrity' principle of the CIA triad?",
-                options: ["Ensuring data is accessible to authorized users when needed.", "Ensuring data is not altered or destroyed in an unauthorized manner.", "Ensuring data is not disclosed to unauthorized individuals.", "Ensuring the system can withstand a denial-of-service attack."],
-                correctAnswers: ["Ensuring data is not altered or destroyed in an unauthorized manner."],
-                difficulty: "Easy",
-                hint: "Think about the state of the data itself. Is it correct and unaltered?"
-            },
-            // --- Domain 2.0: Threats, Vulnerabilities, and Mitigations ---
-            {
-                id: 'q2-1',
-                domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-                question: "A company's server is infected with malware that encrypts all of its files and demands a ransom payment to restore access. What type of attack is this?",
-                options: ["Phishing", "Spoofing", "Ransomware", "Denial of Service"],
-                correctAnswers: ["Ransomware"],
-                difficulty: "Medium",
-                hint: "The name of this attack is a combination of two words: a type of demand and a type of software."
-            },
-            {
-                id: 'q2-2',
-                domain: '2.0 Threats, Vulnerabilities, and Mitigations',
-                question: "Which of the following is an example of social engineering?",
-                options: ["Scanning a network for open ports.", "Using a brute-force attack to guess a password.", "Pretending to be an IT support technician to get a user's password.", "Exploiting a zero-day vulnerability in a web browser."],
-                correctAnswers: ["Pretending to be an IT support technician to get a user's password."],
-                difficulty: "Medium",
-                hint: "Social engineering is about manipulating people, not technology."
-            },
-            // --- Domain 3.0: Security Architecture ---
-            {
-                id: 'q3-1',
-                domain: '3.0 Security Architecture',
-                question: "What is the primary benefit of using a Demilitarized Zone (DMZ)?",
-                options: ["To isolate internal servers from the internet.", "To prevent internal users from accessing the internet.", "To host public-facing servers without exposing the internal network.", "To encrypt all traffic between internal and external networks."],
-                correctAnswers: ["To host public-facing servers without exposing the internal network."],
-                difficulty: "Hard",
-                hint: "A DMZ is like a buffer zone. It sits between two other networks."
-            },
-            {
-                id: 'q3-2',
-                domain: '3.0 Security Architecture',
-                question: "Which security control is a software-based solution that monitors and controls incoming and outgoing network traffic based on a defined set of security rules?",
-                options: ["Intrusion Detection System (IDS)", "Intrusion Prevention System (IPS)", "Firewall", "Router"],
-                correctAnswers: ["Firewall"],
-                difficulty: "Medium",
-                hint: "This control is a foundational element of network security and is often the first line of defense."
-            },
-            // --- Domain 4.0: Secure Operations and Incident Response ---
-            {
-                id: 'q4-1',
-                domain: '4.0 Secure Operations and Incident Response',
-                question: "What is the first step in the incident response process?",
-                options: ["Eradication", "Containment", "Preparation", "Detection and Analysis"],
-                correctAnswers: ["Preparation"],
-                difficulty: "Medium",
-                hint: "Before an incident even occurs, what should you have in place?"
-            },
-            {
-                id: 'q4-2',
-                domain: '4.0 Secure Operations and Incident Response',
-                question: "During a forensics investigation, what is the best practice for handling digital evidence?",
-                options: ["Work directly on the original drive to save time.", "Make a copy of the drive and work only on the copy.", "Use a write-blocker to prevent changes to the original drive.", "Encrypt the drive and then work on the original."],
-                correctAnswers: ["Use a write-blocker to prevent changes to the original drive."],
-                difficulty: "Hard",
-                hint: "The goal is to maintain the integrity of the evidence. What tool physically prevents any changes?"
-            },
-            // --- Domain 5.0: Governance, Risk, and Compliance ---
-            {
-                id: 'q5-1',
-                domain: '5.0 Governance, Risk, and Compliance',
-                question: "A company is performing an assessment to identify potential threats and vulnerabilities to its assets. What is this process called?",
-                options: ["Risk management", "Vulnerability scanning", "Penetration testing", "Threat modeling"],
-                correctAnswers: ["Threat modeling"],
-                difficulty: "Medium",
-                hint: "This process involves creating a model to understand how threats might affect a system."
-            },
-            {
-                id: 'q5-2',
-                domain: '5.0 Governance, Risk, and Compliance',
-                question: "What is the purpose of a Business Impact Analysis (BIA)?",
-                options: ["To identify critical business functions and the impact of their loss.", "To determine the cost of a new security system.", "To audit compliance with regulations.", "To create a disaster recovery plan."],
-                correctAnswers: ["To identify critical business functions and the impact of their loss."],
-                difficulty: "Hard",
-                hint: "Think about the 'impact' part of the name. What are the consequences of a business disruption?"
-            },
-        ];
-
-        const totalQuestions = 10;
-        const examDurationMinutes = 75;
-
-        const Modal = ({ children, onClose }) => {
-            return createPortal(
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 p-4">
-                    <div className="bg-gray-800 rounded-lg shadow-2xl w-full max-w-xl p-8 transform transition-all scale-100 opacity-100 relative">
-                        <button
-                            onClick={onClose}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-200 transition-colors"
-                        >
-                            <LucideIcon name="X" size={24} />
-                        </button>
-                        {children}
-                    </div>
-                </div>,
-                document.body
-            );
+        const handleAnswerChange = (questionId, selectedOption) => {
+            setUserAnswers(prevAnswers => ({
+                ...prevAnswers,
+                [questionId]: selectedOption,
+            }));
         };
 
-        const App = () => {
-            const [examStarted, setExamStarted] = useState(false);
-            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-            const [examQuestions, setExamQuestions] = useState([]);
-            const [userAnswers, setUserAnswers] = useState({});
-            const [flaggedQuestions, setFlaggedQuestions] = useState({});
-            const [timeLeft, setTimeLeft] = useState(examDurationMinutes * 60);
-            const [isPaused, setIsPaused] = useState(false);
-            const [examFinished, setExamFinished] = useState(false);
-            const [showResults, setShowResults] = useState(false);
-            const [results, setResults] = useState(null);
-            const [showModal, setShowModal] = useState(false);
+        const handleFlagQuestion = (questionId) => {
+            setFlaggedQuestions(prevFlags => ({
+                ...prevFlags,
+                [questionId]: !prevFlags[questionId],
+            }));
+        };
 
-            useEffect(() => {
-                let timer;
-                if (examStarted && !isPaused && timeLeft > 0) {
-                    timer = setInterval(() => {
-                        setTimeLeft(prevTime => prevTime - 1);
-                    }, 1000);
+        const finishExam = () => {
+            setIsPaused(true);
+            setExamFinished(true);
+            setShowModal(true);
+        };
+
+        const calculateResults = () => {
+            let correctCount = 0;
+            let incorrectCount = 0;
+
+            examQuestions.forEach(q => {
+                const userAnswer = userAnswers[q.id];
+                if (userAnswer === q.correctAnswers[0]) {
+                    correctCount++;
+                } else if (userAnswer) {
+                    incorrectCount++;
                 }
-                if (timeLeft === 0 && examStarted) {
-                    finishExam();
-                }
-                return () => clearInterval(timer);
-            }, [examStarted, isPaused, timeLeft]);
+            });
 
-            const startNewExam = () => {
-                // Shuffle the question pool and select the first `totalQuestions`
-                const shuffledQuestions = [...questionsPool].sort(() => 0.5 - Math.random());
-                setExamQuestions(shuffledQuestions.slice(0, totalQuestions));
-                setExamStarted(true);
-                setCurrentQuestionIndex(0);
-                setUserAnswers({});
-                setFlaggedQuestions({});
-                setTimeLeft(examDurationMinutes * 60);
-                setIsPaused(false);
-                setExamFinished(false);
-                setShowResults(false);
-                setResults(null);
-                setShowModal(false);
-            };
+            setResults({
+                correct: correctCount,
+                incorrect: incorrectCount,
+                unanswered: totalQuestions - (correctCount + incorrectCount),
+                score: (correctCount / totalQuestions) * 100,
+            });
+            setShowResults(true);
+            setShowModal(false);
+        };
 
-            const handleAnswerChange = (questionId, selectedOption) => {
-                setUserAnswers(prevAnswers => ({
-                    ...prevAnswers,
-                    [questionId]: selectedOption,
-                }));
-            };
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
 
-            const handleFlagQuestion = (questionId) => {
-                setFlaggedQuestions(prevFlags => ({
-                    ...prevFlags,
-                    [questionId]: !prevFlags[questionId],
-                }));
-            };
-
-            const finishExam = () => {
-                setIsPaused(true);
-                setExamFinished(true);
-                setShowModal(true);
-            };
-
-            const calculateResults = () => {
-                let correctCount = 0;
-                let incorrectCount = 0;
-
-                examQuestions.forEach(q => {
-                    const userAnswer = userAnswers[q.id];
-                    if (userAnswer === q.correctAnswers[0]) {
-                        correctCount++;
-                    } else if (userAnswer) {
-                        incorrectCount++;
-                    }
-                });
-
-                setResults({
-                    correct: correctCount,
-                    incorrect: incorrectCount,
-                    unanswered: totalQuestions - (correctCount + incorrectCount),
-                    score: (correctCount / totalQuestions) * 100,
-                });
-                setShowResults(true);
-                setShowModal(false);
-            };
-
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-
-            if (showResults) {
-                return (
-                    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-6rem)] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
-                        <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">Exam Results</h1>
-                        <div className="w-full max-w-2xl bg-gray-800 p-8 rounded-lg shadow-lg">
-                            <div className="grid grid-cols-2 gap-4 mb-8 text-center">
-                                <div className="bg-gray-700 p-4 rounded-lg">
-                                    <p className="text-sm text-gray-400">Total Questions</p>
-                                    <p className="text-3xl font-bold text-blue-400">{totalQuestions}</p>
-                                </div>
-                                <div className="bg-gray-700 p-4 rounded-lg">
-                                    <p className="text-sm text-gray-400">Your Score</p>
-                                    <p className={`text-3xl font-bold ${results.score >= 75 ? 'text-green-400' : 'text-red-400'}`}>
-                                        {results.score.toFixed(1)}%
-                                    </p>
-                                </div>
+        if (showResults) {
+            return (
+                <div className="flex flex-col items-center justify-center min-h-[calc(100vh-6rem)] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
+                    <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">Exam Results</h1>
+                    <div className="w-full max-w-2xl bg-gray-800 p-8 rounded-lg shadow-lg">
+                        <div className="grid grid-cols-2 gap-4 mb-8 text-center">
+                            <div className="bg-gray-700 p-4 rounded-lg">
+                                <p className="text-sm text-gray-400">Total Questions</p>
+                                <p className="text-3xl font-bold text-blue-400">{totalQuestions}</p>
                             </div>
-                            <div className="grid grid-cols-3 gap-4 mb-8 text-center">
-                                <div className="bg-gray-700 p-4 rounded-lg">
-                                    <p className="text-sm text-gray-400">Correct</p>
-                                    <p className="text-2xl font-bold text-green-400">{results.correct}</p>
-                                </div>
-                                <div className="bg-gray-700 p-4 rounded-lg">
-                                    <p className="text-sm text-gray-400">Incorrect</p>
-                                    <p className="text-2xl font-bold text-red-400">{results.incorrect}</p>
-                                </div>
-                                <div className="bg-gray-700 p-4 rounded-lg">
-                                    <p className="text-sm text-gray-400">Unanswered</p>
-                                    <p className="text-2xl font-bold text-yellow-400">{results.unanswered}</p>
-                                </div>
+                            <div className="bg-gray-700 p-4 rounded-lg">
+                                <p className="text-sm text-gray-400">Your Score</p>
+                                <p className={`text-3xl font-bold ${results.score >= 75 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {results.score.toFixed(1)}%
+                                </p>
                             </div>
                         </div>
-                        <button
-                            onClick={startNewExam}
-                            className="mt-8 p-4 rounded-lg bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
-                        >
-                            <LucideIcon name="RefreshCw" size={24} />
-                            <span>Start New Exam</span>
-                        </button>
+                        <div className="grid grid-cols-3 gap-4 mb-8 text-center">
+                            <div className="bg-gray-700 p-4 rounded-lg">
+                                <p className="text-sm text-gray-400">Correct</p>
+                                <p className="text-2xl font-bold text-green-400">{results.correct}</p>
+                            </div>
+                            <div className="bg-gray-700 p-4 rounded-lg">
+                                <p className="text-sm text-gray-400">Incorrect</p>
+                                <p className="text-2xl font-bold text-red-400">{results.incorrect}</p>
+                            </div>
+                            <div className="bg-gray-700 p-4 rounded-lg">
+                                <p className="text-sm text-gray-400">Unanswered</p>
+                                <p className="text-2xl font-bold text-yellow-400">{results.unanswered}</p>
+                            </div>
+                        </div>
                     </div>
-                );
-            }
+                    <button
+                        onClick={startNewExam}
+                        className="mt-8 p-4 rounded-lg bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+                    >
+                        <LucideIcon name="RefreshCw" size={24} />
+                        <span>Start New Exam</span>
+                    </button>
+                </div>
+            );
+        }
 
-            const currentQuestion = examQuestions[currentQuestionIndex];
+        const currentQuestion = examQuestions[currentQuestionIndex];
 
-            const questionNavigation = (
-                <div className="grid grid-cols-5 md:grid-cols-10 gap-2 p-4 bg-gray-800 rounded-b-lg overflow-y-auto max-h-48 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+        const questionNavigation = (
+            <div className="p-4 rounded-lg bg-gray-800 flex-none w-full md:w-64 max-h-screen overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-300">Questions</h3>
+                    <div className="flex items-center space-x-2">
+                        <LucideIcon name="Clock" size={16} className="text-gray-400" />
+                        <span className="text-sm font-semibold text-gray-300">
+                            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                        </span>
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                     {examQuestions.map((q, index) => (
                         <button
                             key={q.id}
                             onClick={() => setCurrentQuestionIndex(index)}
                             className={`
-                                w-10 h-10 flex items-center justify-center rounded-lg font-semibold text-sm
+                                w-full h-12 flex items-center justify-center rounded-lg font-semibold text-sm
                                 ${index === currentQuestionIndex ? 'bg-blue-600 text-white' : ''}
                                 ${flaggedQuestions[q.id] ? 'bg-yellow-500 text-gray-900' : ''}
                                 ${userAnswers[q.id] && !flaggedQuestions[q.id] ? 'bg-green-600 text-white' : ''}
@@ -332,172 +340,171 @@
                         </button>
                     ))}
                 </div>
-            );
+            </div>
+        );
 
-            const pauseScreen = (
-                <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
-                    <h1 className="text-4xl font-extrabold text-yellow-400 mb-4">Exam Paused</h1>
+        const pauseScreen = (
+            <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
+                <h1 className="text-4xl font-extrabold text-yellow-400 mb-4">Exam Paused</h1>
+                <p className="text-lg text-center mb-6 max-w-md">
+                    Your time has been stopped. Click 'Resume Exam' when you are ready to continue.
+                </p>
+                <button
+                    onClick={() => setIsPaused(false)}
+                    className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+                >
+                    <LucideIcon name="Play" size={24} />
+                    <span>Resume Exam</span>
+                </button>
+            </div>
+        );
+
+        if (!examStarted) {
+            return (
+                <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
+                    <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">
+                        CompTIA Security+ SY0-701 Practice Exam
+                    </h1>
                     <p className="text-lg text-center mb-6 max-w-md">
-                        Your time has been stopped. Click 'Resume Exam' when you are ready to continue.
+                        This practice exam consists of 10 questions pulled from a pool of 10,
+                        covering all the key objectives for the SY0-701 certification. You will have 75 minutes to complete the test.
                     </p>
                     <button
-                        onClick={() => setIsPaused(false)}
-                        className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+                        onClick={startNewExam}
+                        className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200"
                     >
-                        <LucideIcon name="Play" size={24} />
-                        <span>Resume Exam</span>
+                        Start Exam
                     </button>
                 </div>
             );
+        }
 
-            if (!examStarted) {
-                return (
-                    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-200 p-8 rounded-lg shadow-xl">
-                        <h1 className="text-4xl font-extrabold text-blue-400 mb-4 text-center">
-                            CompTIA Security+ SY0-701 Practice Exam
-                        </h1>
-                        <p className="text-lg text-center mb-6 max-w-md">
-                            This practice exam consists of 10 questions pulled from a pool of 10,
-                            covering all the key objectives for the SY0-701 certification. You will have 75 minutes to complete the test.
-                        </p>
-                        <button
-                            onClick={startNewExam}
-                            className="p-4 rounded-lg bg-green-600 text-white text-xl font-bold hover:bg-green-700 transition-colors duration-200"
-                        >
-                            Start Exam
-                        </button>
-                    </div>
-                );
-            }
+        if (isPaused && !examFinished) {
+            return pauseScreen;
+        }
 
-            if (isPaused && !examFinished) {
-                return pauseScreen;
-            }
-
-            return (
-                <div className="min-h-screen bg-gray-900 text-gray-200 p-4 font-sans">
-                    <div className="container mx-auto max-w-4xl">
-                        <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden mb-4">
-                            <div className="p-4 flex flex-col md:flex-row items-center justify-between border-b border-gray-700">
-                                <h2 className="text-xl font-bold text-blue-400 text-center md:text-left mb-2 md:mb-0">
-                                    Question {currentQuestionIndex + 1} of {totalQuestions}
-                                </h2>
-                                <div className="flex items-center space-x-4">
-                                    <span className="text-lg font-semibold">
-                                        Time Left: {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-                                    </span>
-                                    <button
-                                        onClick={() => setIsPaused(true)}
-                                        className="p-2 rounded-full bg-gray-700 text-yellow-400 hover:bg-gray-600 transition-colors duration-200"
-                                        title="Pause Exam"
-                                    >
-                                        <LucideIcon name="Pause" size={20} />
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="p-4 md:p-8">
-                                <p className="text-lg mb-6">{currentQuestion?.question}</p>
-                                <div className="space-y-4">
-                                    {currentQuestion?.options.map((option, index) => (
-                                        <div
-                                            key={index}
-                                            className={`
-                                                flex items-center p-4 rounded-lg cursor-pointer
-                                                ${userAnswers[currentQuestion.id] === option
-                                                    ? 'bg-blue-600 text-white shadow-md'
-                                                    : 'bg-gray-700 hover:bg-gray-600 transition-colors duration-200'
-                                                }
-                                            `}
-                                            onClick={() => handleAnswerChange(currentQuestion.id, option)}
-                                        >
-                                            <span className="flex-shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center mr-4">
-                                                {userAnswers[currentQuestion.id] === option ? (
-                                                    <LucideIcon name="CheckCircle2" size={16} className="text-white" />
-                                                ) : (
-                                                    <span className="text-gray-400 font-bold">{String.fromCharCode(65 + index)}</span>
-                                                )}
-                                            </span>
-                                            <p className="text-base flex-grow">{option}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="p-4 flex items-center justify-between border-t border-gray-700 mt-4">
+        return (
+            <div className="min-h-screen bg-gray-900 text-gray-200 p-4 font-sans flex flex-col md:flex-row">
+                {/* Main Content Area */}
+                <div className="container mx-auto max-w-4xl flex-grow md:mr-4">
+                    <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden mb-4">
+                        <div className="p-4 flex flex-col md:flex-row items-center justify-between border-b border-gray-700">
+                            <h2 className="text-xl font-bold text-blue-400 text-center md:text-left mb-2 md:mb-0">
+                                Question {currentQuestionIndex + 1} of {totalQuestions}
+                            </h2>
+                            <div className="flex items-center space-x-4">
                                 <button
-                                    onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
-                                    disabled={currentQuestionIndex === 0}
-                                    className="p-3 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 flex items-center space-x-2"
+                                    onClick={() => setIsPaused(true)}
+                                    className="p-2 rounded-full bg-gray-700 text-yellow-400 hover:bg-gray-600 transition-colors duration-200"
+                                    title="Pause Exam"
+                                >
+                                    <LucideIcon name="Pause" size={20} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-4 md:p-8">
+                            <p className="text-lg mb-6">{currentQuestion?.question}</p>
+                            <div className="space-y-4">
+                                {currentQuestion?.options.map((option, index) => (
+                                    <div
+                                        key={index}
+                                        className={`
+                                            flex items-center p-4 rounded-lg cursor-pointer
+                                            ${userAnswers[currentQuestion.id] === option
+                                                ? 'bg-blue-600 text-white shadow-md'
+                                                : 'bg-gray-700 hover:bg-gray-600 transition-colors duration-200'
+                                            }
+                                        `}
+                                        onClick={() => handleAnswerChange(currentQuestion.id, option)}
+                                    >
+                                        <span className="flex-shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center mr-4">
+                                            {userAnswers[currentQuestion.id] === option ? (
+                                                <LucideIcon name="CheckCircle2" size={16} className="text-white" />
+                                            ) : (
+                                                <span className="text-gray-400 font-bold">{String.fromCharCode(65 + index)}</span>
+                                            )}
+                                        </span>
+                                        <p className="text-base flex-grow">{option}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="p-4 flex items-center justify-between border-t border-gray-700 mt-4">
+                            <button
+                                onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                                disabled={currentQuestionIndex === 0}
+                                className="p-3 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 flex items-center space-x-2"
+                            >
+                                <LucideIcon name="ArrowLeft" size={20} />
+                                <span>Previous</span>
+                            </button>
+                            <button
+                                onClick={() => handleFlagQuestion(currentQuestion.id)}
+                                className={`p-3 rounded-lg flex items-center space-x-2 ${
+                                    flaggedQuestions[currentQuestion.id] ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                } transition-colors duration-200`}
+                            >
+                                <LucideIcon name="Flag" size={20} />
+                                <span>{flaggedQuestions[currentQuestion.id] ? 'Unflag' : 'Flag'}</span>
+                            </button>
+                            {currentQuestionIndex < totalQuestions - 1 ? (
+                                <button
+                                    onClick={() => setCurrentQuestionIndex(prev => prev + 1)}
+                                    className="p-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+                                >
+                                    <span>Next</span>
+                                    <LucideIcon name="ArrowRight" size={20} />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={finishExam}
+                                    className="p-3 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+                                >
+                                    <span>Finish</span>
+                                    <LucideIcon name="CheckCircle2" size={20} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right-hand Sidebar for Navigation */}
+                <div className="flex-none w-full md:w-64 mt-4 md:mt-0">
+                    {questionNavigation}
+                </div>
+
+                {showModal && (
+                    <Modal onClose={() => setShowModal(false)}>
+                        <div className="text-center">
+                            <h2 className="text-3xl font-extrabold text-blue-400 mb-4">Exam Complete</h2>
+                            <p className="text-lg text-gray-300 mb-6">
+                                You have answered all questions. Are you ready to see your results?
+                            </p>
+                            <div className="flex justify-center space-x-4">
+                                <button
+                                    onClick={() => setShowModal(false)}
+                                    className="p-3 rounded-lg bg-gray-600 text-white hover:bg-gray-500 transition-colors duration-200 flex items-center space-x-2"
                                 >
                                     <LucideIcon name="ArrowLeft" size={20} />
-                                    <span>Previous</span>
+                                    <span>Review Exam</span>
                                 </button>
                                 <button
-                                    onClick={() => handleFlagQuestion(currentQuestion.id)}
-                                    className={`p-3 rounded-lg flex items-center space-x-2 ${
-                                        flaggedQuestions[currentQuestion.id] ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                    } transition-colors duration-200`}
+                                    onClick={calculateResults}
+                                    className="p-3 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
                                 >
-                                    <LucideIcon name="Flag" size={20} />
-                                    <span>{flaggedQuestions[currentQuestion.id] ? 'Unflag' : 'Flag'}</span>
+                                    <LucideIcon name="CheckCircle2" size={20} />
+                                    <span>Submit & View Results</span>
                                 </button>
-                                {currentQuestionIndex < totalQuestions - 1 ? (
-                                    <button
-                                        onClick={() => setCurrentQuestionIndex(prev => prev + 1)}
-                                        className="p-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
-                                    >
-                                        <span>Next</span>
-                                        <LucideIcon name="ArrowRight" size={20} />
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={finishExam}
-                                        className="p-3 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
-                                    >
-                                        <span>Finish</span>
-                                        <LucideIcon name="CheckCircle2" size={20} />
-                                    </button>
-                                )}
                             </div>
                         </div>
-                        <div className="bg-gray-800 rounded-lg shadow-xl">
-                            <div className="p-4 flex items-center justify-between">
-                                <h3 className="text-xl font-bold text-gray-300">Question Navigation</h3>
-                            </div>
-                            {questionNavigation}
-                        </div>
-                    </div>
-                    {showModal && (
-                        <Modal onClose={() => setShowModal(false)}>
-                            <div className="text-center">
-                                <h2 className="text-3xl font-extrabold text-blue-400 mb-4">Exam Complete</h2>
-                                <p className="text-lg text-gray-300 mb-6">
-                                    You have answered all questions. Are you ready to see your results?
-                                </p>
-                                <div className="flex justify-center space-x-4">
-                                    <button
-                                        onClick={() => setShowModal(false)}
-                                        className="p-3 rounded-lg bg-gray-600 text-white hover:bg-gray-500 transition-colors duration-200 flex items-center space-x-2"
-                                    >
-                                        <LucideIcon name="ArrowLeft" size={20} />
-                                        <span>Review Exam</span>
-                                    </button>
-                                    <button
-                                        onClick={calculateResults}
-                                        className="p-3 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
-                                    >
-                                        <LucideIcon name="CheckCircle2" size={20} />
-                                        <span>Submit & View Results</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </Modal>
-                    )}
-                </div>
-            );
-        };
+                    </Modal>
+                )}
+            </div>
+        );
+    };
 
-        const rootElement = document.getElementById('root');
-        ReactDOM.render(<App />, rootElement);
-    </script>
+    const rootElement = document.getElementById('root');
+    ReactDOM.render(<App />, rootElement);
+</script>
 </body>
 </html>
