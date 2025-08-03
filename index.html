@@ -1,9 +1,84 @@
+This document provides the HTML and CSS for a simple website to help you prepare for the CompTIA Security+ exam. You can copy and paste the content below into your local index.html file to get started.
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Hello World</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompTIA Security+ Exam Prep</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            color: #005a87;
+            text-align: center;
+        }
+        .content {
+            margin-top: 20px;
+        }
+        p {
+            font-size: 1.1em;
+        }
+        .btn {
+            display: inline-block;
+            background: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #777;
+        }
+    </style>
 </head>
 <body>
-  <h1>Hello, World!</h1>
+    <div class="container">
+        <header>
+            <h1>CompTIA Security+ (SY0-601) Exam Prep</h1>
+        </header>
+        <section class="content">
+            <p>Welcome to your personal study guide for the CompTIA Security+ exam. This is the starting point for your journey to becoming a certified cybersecurity professional.</p>
+            <p>You can use this page to add your own notes, practice questions, or links to study resources. The page is now live on GitHub, so any changes you make and push to your main branch will be automatically updated.</p>
+            <a href="#" class="btn">Start Studying</a>
+        </section>
+        <footer class="footer">
+            <p>&copy; 2023 CompTIA Security+ Prep. All rights reserved.</p>
+        </footer>
+    </div>
 </body>
 </html>
+
+To update your website, simply copy the code above and replace the content of your local index.html file. Then, run the following commands in your terminal to save and deploy the changes:
+
+git add .
+git commit -m "Added initial Security+ website content"
+git push origin main
+
+Once you've pushed the changes and the workflow completes, your website will be updated with this new content. Congratulations on getting your site live!
